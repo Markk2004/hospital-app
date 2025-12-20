@@ -299,6 +299,7 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass }: { title: st
 const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false); // New state
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [text, setText] = useState('');
@@ -329,15 +330,13 @@ const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
   };
 
   return (
-    <div className="min-h-screen flex w-full bg-slate-50 font-sans selection:bg-blue-100 selection:text-blue-900 animate-in fade-in duration-500">
+    <div className="min-h-screen flex w-full bg-slate-50 font-sans selection:bg-blue-100 selection:text-blue-900 animate-in fade-in duration-500 relative">
+      {/* LEFT SIDE: IMAGE & INFO (DESKTOP ONLY) */}
       <div className="hidden lg:flex w-1/2 bg-blue-600 relative overflow-hidden items-center justify-center p-12">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-600 via-indigo-700 to-slate-900 opacity-90 z-10"></div>
         <div className="relative z-20 text-white max-w-lg">
-          <div className="mb-8 inline-flex items-center space-x-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-xl">
-             <ShieldCheck className="w-5 h-5 text-emerald-300" />
-             <span className="text-sm font-medium tracking-wide">Secure Hospital Gateway</span>
-          </div>
-          <h1 className="text-5xl font-extrabold tracking-tight mb-6 leading-tight">Smart <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">Asset</span> <br/> Management</h1>
+          
+          <h1 className="text-5xl font-extrabold tracking-tight mb-6 leading-tight">Hospital <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">Asset</span> <br/> Management</h1>
           <p className="text-lg text-blue-100/90 leading-relaxed mb-8 h-8 font-light">{text}<span className="animate-pulse">|</span></p>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/10 hover:bg-white/20 transition-colors cursor-default">
@@ -349,6 +348,7 @@ const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
           </div>
         </div>
       </div>
+      {/* RIGHT SIDE: LOGIN FORM */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 relative">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center lg:text-left">
@@ -373,10 +373,32 @@ const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
                 </button>
               </div>
             </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe} 
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-xs text-slate-600 font-medium">จดจำรหัสผ่าน</span>
+              </label>
+            </div>
+
             <button type="submit" disabled={isLoading || isSuccess} className={`w-full flex items-center justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 transform active:scale-[0.98] ${isSuccess ? 'bg-emerald-500 hover:bg-emerald-600 ring-emerald-500/50' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'}`}>
               {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : isSuccess ? <span className="flex items-center gap-2">เข้าสู่ระบบสำเร็จ <ShieldCheck className="h-5 w-5"/></span> : <span className="flex items-center gap-2">เข้าสู่ระบบ <ArrowRight className="h-5 w-5" /></span>}
             </button>
           </form>
+        </div>
+
+        {/* Footer Elements */}
+        <div className="absolute bottom-4 left-6 text-xs text-slate-400 hidden md:block">
+          © 2025 Hospital Asset Maintenance. All rights reserved.
+        </div>
+        <div className="absolute bottom-4 right-6 text-xs text-slate-500 hover:text-blue-600 cursor-pointer transition-colors">
+          พบปัญหาการใช้งาน? ติดต่อฝ่ายสนับสนุน
         </div>
       </div>
     </div>
@@ -655,6 +677,16 @@ const DashboardView = ({ jobs, inventory, onNavigate }: { jobs: Job[]; inventory
              </ResponsiveContainer>
           </div>
 
+          {/* Legend: Color Indicators */}
+          <div className="flex flex-wrap justify-center gap-3 mt-2">
+            {dynamicAssetStatusData.map((entry, index) => (
+              <div key={index} className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
+                <span className="text-xs text-slate-600">{entry.name}</span>
+              </div>
+            ))}
+          </div>
+
           {/* New Requirement: Explicit Numbers */}
           <div className="mt-4 border-t border-slate-100 pt-4">
              <div className="flex justify-between items-center mb-3">
@@ -752,6 +784,13 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
     onShowToast("สร้างใบงานซ่อมใหม่แล้ว!");
   };
 
+  const handleSelectJob = (job: Job) => {
+    if (job.urgency === 'high' && job.status !== 'completed') {
+      alert(`แจ้งเตือน: งานซ่อมด่วน (${job.id}) - ${job.assetName}`);
+    }
+    setSelectedJob(job);
+  };
+
   return (
     <div className="flex flex-col h-full bg-slate-50/50">
       {activeView !== 'form' && (
@@ -779,7 +818,7 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {jobs.map(job => (
-                    <tr key={job.id} onClick={() => setSelectedJob(job)} className="hover:bg-blue-50/30 transition-colors cursor-pointer">
+                    <tr key={job.id} onClick={() => handleSelectJob(job)} className="hover:bg-blue-50/30 transition-colors cursor-pointer">
                       <td className="px-6 py-4 font-bold text-blue-600">{job.id}</td>
                       <td className="px-6 py-4"><div>{job.assetName}</div><div className="text-xs text-slate-400">{job.location}</div></td>
                       <td className="px-6 py-4 text-slate-600 max-w-xs truncate">{job.issue}</td>
@@ -802,7 +841,7 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
                   </div>
                   <div className="p-2 space-y-2 overflow-y-auto flex-1">
                     {getJobsByStatus(status).map(job => (
-                      <div key={job.id} onClick={() => setSelectedJob(job)} className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer group">
+                      <div key={job.id} onClick={() => handleSelectJob(job)} className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer group">
                          <div className="flex justify-between mb-2">
                            <span className="text-[10px] font-bold bg-slate-50 px-1 rounded border text-slate-500">{job.id}</span>
                            <UrgencyBadge level={job.urgency} />
@@ -886,7 +925,7 @@ export default function App() {
 
       <aside className={`${isSidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full md:w-20 md:translate-x-0'} fixed md:relative bg-white border-r border-slate-200 transition-all duration-300 flex flex-col z-30 h-full flex-shrink-0 shadow-lg shadow-slate-100`}>
         <div className="p-6 flex items-center justify-between h-20 shrink-0">
-          {isSidebarOpen ? <div className="flex items-center space-x-2 text-blue-600 font-bold text-xl truncate animate-in fade-in"><Activity className="w-8 h-8 flex-shrink-0" /><span>MedAsset</span></div> : <Activity className="w-8 h-8 text-blue-600 mx-auto" />}
+          {isSidebarOpen ? <div className="flex items-center space-x-2 text-blue-600 font-bold text-xl truncate animate-in fade-in"><Activity className="w-8 h-8 flex-shrink-0" /><span>Hospital Asset</span></div> : <Activity className="w-8 h-8 text-blue-600 mx-auto" />}
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden md:block text-slate-400 hover:text-slate-600 transition-transform hover:scale-110">{isSidebarOpen ? <X size={20} /> : <Menu size={20} />}</button>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-slate-400"><X size={20} /></button>
         </div>
