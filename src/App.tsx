@@ -443,138 +443,141 @@ const MobileLoginPage = ({ onLogin = () => {} }: { onLogin: () => void }) => {
   };
 
   return (
-    // ตรวจสอบบรรทัดนี้: ต้องมี bg-blue-600 และ justify-center
-    <div className="min-h-screen w-full font-sans relative flex flex-col items-center justify-center overflow-hidden selection:bg-blue-100 selection:text-blue-900 bg-blue-600">
+    // Changed: overflow-hidden -> overflow-y-auto, added min-h-screen to inner container for centering
+    <div className="min-h-screen w-full font-sans relative bg-blue-600 overflow-y-auto selection:bg-blue-100 selection:text-blue-900">
       
-      {/* Background Gradient (Full Screen like PC) - ส่วนนี้คือพื้นหลังสีฟ้า */}
-      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-600 via-indigo-700 to-slate-900 opacity-90 z-0"></div>
+      {/* Background Gradient (Fixed) */}
+      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-blue-600 via-indigo-700 to-slate-900 opacity-90 z-0"></div>
         
-      {/* Decorative Circles */}
-      <div className="absolute top-[-50px] right-[-50px] w-60 h-60 bg-white opacity-10 rounded-full blur-3xl z-0"></div>
-      <div className="absolute bottom-[-30px] left-[-30px] w-40 h-40 bg-cyan-400 opacity-20 rounded-full blur-2xl z-0"></div>
+      {/* Decorative Circles (Fixed) */}
+      <div className="fixed top-[-50px] right-[-50px] w-60 h-60 bg-white opacity-10 rounded-full blur-3xl z-0"></div>
+      <div className="fixed bottom-[-30px] left-[-30px] w-40 h-40 bg-cyan-400 opacity-20 rounded-full blur-2xl z-0"></div>
 
-      {/* Content Container */}
-      <div className="relative z-10 w-full max-w-md px-6 py-8 flex flex-col items-center">
+      {/* Content Container - Use min-h-screen and flex to center content, allowing scroll if needed */}
+      <div className="relative z-10 min-h-screen w-full flex flex-col items-center justify-center py-8 px-6">
+        <div className="w-full max-w-md flex flex-col items-center">
         
-        {/* Branding Section */}
-        <div className="text-center text-white mb-8 w-full animate-in fade-in slide-in-from-top-4 duration-700">
-           
-           
-           <h1 className="text-3xl font-extrabold tracking-tight leading-tight mb-2">
-             Hospital <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">Asset</span><br/>Management
-           </h1>
-           
-           <div className="h-6 flex items-center justify-center">
-              <p className="text-sm text-blue-100/80 font-light flex items-center gap-1">
-                {text}<span className="w-0.5 h-4 bg-blue-200 animate-pulse"></span>
-              </p>
-           </div>
-        </div>
+          {/* Branding Section */}
+          <div className="text-center text-white mb-8 w-full animate-in fade-in slide-in-from-top-4 duration-700">
+             
+             
+             <h1 className="text-3xl font-extrabold tracking-tight leading-tight mb-2">
+               Hospital <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">Asset</span><br/>Management
+             </h1
+             >
+             
+             <div className="h-6 flex items-center justify-center">
+                <p className="text-sm text-blue-100/80 font-light flex items-center gap-1">
+                  {text}<span className="w-0.5 h-4 bg-blue-200 animate-pulse"></span>
+                </p>
+             </div>
+          </div>
 
-        {/* Login Card */}
-        <div className="w-full bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-           <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-slate-800">ยินดีต้อนรับกลับ</h2>
-              <p className="text-slate-500 text-xs mt-1">ลงชื่อเข้าใช้งานระบบด้วยรหัสพนักงาน</p>
-           </div>
-           
-           <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Username Input */}
-              <div className="space-y-1.5 group">
-                <label className="text-xs font-bold text-slate-600 ml-1">รหัสพนักงาน / อีเมล</label>
-                <div className="relative transition-transform duration-300 focus-within:scale-[1.02]">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+          {/* Login Card */}
+          <div className="w-full bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+             <div className="text-center mb-6">
+                <h2 className="text-xl font-bold text-slate-800">ยินดีต้อนรับกลับ</h2>
+                <p className="text-slate-500 text-xs mt-1">ลงชื่อเข้าใช้งานระบบด้วยรหัสพนักงาน</p>
+             </div>
+             
+             <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Username Input */}
+                <div className="space-y-1.5 group">
+                  <label className="text-xs font-bold text-slate-600 ml-1">รหัสพนักงาน / อีเมล</label>
+                  <div className="relative transition-transform duration-300 focus-within:scale-[1.02]">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <User className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    </div>
+                    <input 
+                      type="text" 
+                      name="username" 
+                      required 
+                      className="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm" 
+                      placeholder="เช่น admin@hospital.com" 
+                      value={formData.username} 
+                      onChange={handleChange} 
+                    />
                   </div>
-                  <input 
-                    type="text" 
-                    name="username" 
-                    required 
-                    className="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm" 
-                    placeholder="เช่น admin@hospital.com" 
-                    value={formData.username} 
-                    onChange={handleChange} 
-                  />
                 </div>
-              </div>
 
-              {/* Password Input */}
-              <div className="space-y-1.5 group">
-                <div className="flex justify-between items-center ml-1">
-                   <label className="text-xs font-bold text-slate-600">รหัสผ่าน</label>
-                   <a href="#" className="text-[10px] font-medium text-blue-600 hover:text-blue-700">ลืมรหัสผ่าน?</a>
-                </div>
-                <div className="relative transition-transform duration-300 focus-within:scale-[1.02]">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                {/* Password Input */}
+                <div className="space-y-1.5 group">
+                  <div className="flex justify-between items-center ml-1">
+                     <label className="text-xs font-bold text-slate-600">รหัสผ่าน</label>
+                     <a href="#" className="text-[10px] font-medium text-blue-600 hover:text-blue-700">ลืมรหัสผ่าน?</a>
                   </div>
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    name="password" 
-                    required 
-                    className="block w-full pl-11 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm" 
-                    placeholder="••••••••" 
-                    value={formData.password} 
-                    onChange={handleChange} 
-                  />
-                  <button 
-                    type="button" 
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center" 
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5 text-slate-400" /> : <Eye className="h-5 w-5 text-slate-400" />}
-                  </button>
+                  <div className="relative transition-transform duration-300 focus-within:scale-[1.02]">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    </div>
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      name="password" 
+                      required 
+                      className="block w-full pl-11 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm" 
+                      placeholder="••••••••" 
+                      value={formData.password} 
+                      onChange={handleChange} 
+                    />
+                    <button 
+                      type="button" 
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center" 
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5 text-slate-400" /> : <Eye className="h-5 w-5 text-slate-400" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Remember Me Checkbox */}
-              <div className="flex items-center justify-between">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={rememberMe} 
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-xs text-slate-600 font-medium">จดจำรหัสผ่าน</span>
-                </label>
-              </div>
+                {/* Remember Me Checkbox */}
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={rememberMe} 
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-xs text-slate-600 font-medium">จดจำรหัสผ่าน</span>
+                  </label>
+                </div>
 
-              {/* Submit Button */}
-              <button 
-                type="submit" 
-                disabled={isLoading || isSuccess} 
-                className={`w-full flex items-center justify-center py-4 px-4 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 transform active:scale-95 mt-2 ${
-                  isSuccess 
-                    ? 'bg-emerald-500 hover:bg-emerald-600 ring-2 ring-emerald-500/50' 
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
-                }`}
-              >
-                {isLoading ? (
-                  <Loader2 className="animate-spin h-5 w-5" />
-                ) : isSuccess ? (
-                  <span className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
-                    เข้าสู่ระบบสำเร็จ <ShieldCheck className="h-5 w-5"/>
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    เข้าสู่ระบบ <ArrowRight className="h-5 w-5" />
-                  </span>
-                )}
-              </button>
-           </form>
-           
-           {/* Quick Features (Icon Grid) */}
-           <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
-  
-           </div>
+                {/* Submit Button */}
+                <button 
+                  type="submit" 
+                  disabled={isLoading || isSuccess} 
+                  className={`w-full flex items-center justify-center py-4 px-4 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 transform active:scale-95 mt-2 ${
+                    isSuccess 
+                      ? 'bg-emerald-500 hover:bg-emerald-600 ring-2 ring-emerald-500/50' 
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                  }`}
+                >
+                  {isLoading ? (
+                    <Loader2 className="animate-spin h-5 w-5" />
+                  ) : isSuccess ? (
+                    <span className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                      เข้าสู่ระบบสำเร็จ <ShieldCheck className="h-5 w-5"/>
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      เข้าสู่ระบบ <ArrowRight className="h-5 w-5" />
+                    </span>
+                  )}
+                </button>
+             </form>
+             
+             {/* Quick Features (Icon Grid) */}
+             <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
+                
+             </div>
+          </div>
+
+          {/* Footer */}
+          <p className="mt-8 text-[10px] text-blue-100/80 font-medium">
+            © 2025 Hospital Asset System. Secure Connection.
+          </p>
+
         </div>
-
-        {/* Footer */}
-        <p className="mt-8 text-[10px] text-blue-100/80 font-medium">
-          © 2025 Hospital Asset System. Secure Connection.
-        </p>
-
       </div>
     </div>
   );
