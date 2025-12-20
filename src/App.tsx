@@ -20,7 +20,7 @@ import {
   Layout,
   Trash2,
   FileText,
-  // QrCode,  <-- เอาออกแล้ว เพื่อแก้ Error TS6133
+  // QrCode,  <-- ลบออกเพื่อแก้ Error TS6133
   AlertTriangle,
   ChevronRight,
   Calculator,
@@ -117,7 +117,7 @@ const initialJobs: Job[] = [
     status: 'in_progress',
     reporter: 'จนท. ธุรการ',
     date: '20/12/2025 10:15',
-    type: 'CM',
+    type: 'CM', 
     technician: 'นายช่าง สมชาย',
     partsUsed: [],
     repairNote: 'กำลังตรวจสอบวงจรภาคจ่ายไฟ'
@@ -297,7 +297,7 @@ const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
 
 // --- MODAL: JOB DETAIL ---
 const JobDetailModal = ({ job, onClose, onSave }: { job: Job; onClose: () => void; onSave: (j: Job) => void }) => {
-  // แก้ไข: เอา setStatus ออก เพราะไม่ได้ใช้งาน (แก้ Error TS6133)
+  // แก้ไข 2: ลบ setStatus ออกเพราะไม่ได้ใช้งาน (แก้ Error TS6133)
   const [status] = useState<Job['status']>(job.status);
   const [repairNote, setRepairNote] = useState(job.repairNote || '');
   const [usedParts, setUsedParts] = useState<Part[]>(job.partsUsed || []);
@@ -461,7 +461,7 @@ const RepairRequestForm = ({ onCancel, onSubmit }: { onCancel: () => void; onSub
       </div>
 
       <div className="space-y-6">
-        {/* ปรับปรุงตรงนี้: เพิ่ม onClick ให้แจ้งเตือนว่าปิดระบบ และยังคง UI เดิมไว้ */}
+        {/* ส่วนปุ่ม QR Code ที่ปิดการทำงานไว้ แต่ยังแสดงผล */}
         <div 
             onClick={() => alert("ระบบ QR Code ปิดปรับปรุงชั่วคราว")}
             className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300 flex items-center justify-between group cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
