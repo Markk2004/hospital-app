@@ -472,7 +472,11 @@ const MobileLoginPage = ({ onLogin = () => {} }: { onLogin: () => void }) => {
         
         {/* Branding Section */}
         <div className="text-center text-white mb-8 w-full animate-in fade-in slide-in-from-top-4 duration-700">
-          
+           <div className="inline-flex items-center space-x-2 bg-white/15 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-lg mb-5">
+             <ShieldCheck className="w-4 h-4 text-emerald-300" />
+             <span className="text-[10px] uppercase font-bold tracking-widest text-blue-50">Hospital Gateway</span>
+           </div>
+           
            <h1 className="text-3xl font-extrabold tracking-tight leading-tight mb-2">
              Hospital <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">Asset</span><br/>Management
            </h1>
@@ -579,7 +583,18 @@ const MobileLoginPage = ({ onLogin = () => {} }: { onLogin: () => void }) => {
            
            {/* Quick Features (Icon Grid) */}
            <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
-              
+              <div className="flex flex-col items-center gap-2 text-slate-400">
+                 <div className="p-2.5 bg-blue-50 rounded-full text-blue-500">
+                    <Activity className="w-5 h-5" />
+                 </div>
+                 <span className="text-[10px] font-medium">Real-time Track</span>
+              </div>
+              <div className="flex flex-col items-center gap-2 text-slate-400">
+                 <div className="p-2.5 bg-emerald-50 rounded-full text-emerald-500">
+                    <Stethoscope className="w-5 h-5" />
+                 </div>
+                 <span className="text-[10px] font-medium">Maintenance</span>
+              </div>
            </div>
         </div>
 
@@ -914,7 +929,27 @@ const DashboardView = ({ jobs, inventory, onNavigate }: { jobs: Job[]; inventory
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-blue-50/30"><h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Wrench className="w-5 h-5 text-blue-600" /> งานซ่อมล่าสุด</h3><button onClick={() => onNavigate('maintenance')} className="text-xs text-blue-600 hover:underline">ดูทั้งหมด</button></div>
           <div className="p-4 space-y-3">
-             {jobs.slice(0, 3).map((job) => (<div key={job.id} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"><Activity className="w-5 h-5" /></div><div><h4 className="font-semibold text-slate-700 text-sm">{job.assetName}</h4><p className="text-xs text-slate-500">{job.issue}</p></div></div><StatusBadge status={job.status} /></div>))}
+             {jobs.slice(0, 4).map((job) => (
+               <div key={job.id} className="p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-all group">
+                  <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{job.id}</span>
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1"><Clock size={10}/> {job.date}</span>
+                      </div>
+                      <StatusBadge status={job.status} />
+                  </div>
+                  <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${job.urgency === 'high' ? 'bg-red-100 text-red-500' : 'bg-slate-100 text-slate-500'}`}>
+                          <Activity className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-slate-700 text-sm truncate">{job.assetName}</h4>
+                          <p className="text-xs text-slate-500 truncate"><span className="font-semibold text-slate-600">อาการ:</span> {job.issue}</p>
+                          <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1"><User size={10}/> แจ้งโดย: {job.reporter}</p>
+                      </div>
+                  </div>
+               </div>
+             ))}
              {jobs.length === 0 && <p className="text-center text-slate-400 py-4">ไม่มีงานซ่อมล่าสุด</p>}
           </div>
         </div>
@@ -1013,7 +1048,7 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+      <div className="flex-1 overflow-hidden relative">
         {activeView === 'form' && <RepairRequestForm onCancel={() => setActiveView('list')} onSubmit={handleAddNewJob} />}
         
         {activeView === 'list' && (
@@ -1025,7 +1060,7 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {currentJobs.map(job => (
-                    <tr key={job.id} onClick={() => handleSelectJob(job)} className={`hover:bg-blue-50/30 transition-colors cursor-pointer ${job.urgency === 'high' ? 'bg-red-50/30' : ''}`}>
+                    <tr key={job.id} onClick={() => handleSelectJob(job)} className={`transition-colors cursor-pointer ${job.urgency === 'high' ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-blue-50/30'}`}>
                       <td className="px-6 py-4 font-bold text-blue-600">
                         {job.id}
                         {job.urgency === 'high' && <span className="ml-2 inline-flex w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
@@ -1078,7 +1113,7 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
                            <span className="text-[10px] font-bold bg-slate-50 px-1 rounded border text-slate-500">{job.id}</span>
                            <UrgencyBadge level={job.urgency} />
                          </div>
-                         <h4 className="font-bold text-slate-800 text-sm mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">{job.assetName}</h4>
+                         <h4 className="font-bold text-slate-700 text-sm mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">{job.assetName}</h4>
                          <p className="text-xs text-slate-500 mb-2 line-clamp-2">{job.issue}</p>
                          <div className="pt-2 border-t border-slate-50 flex justify-between items-center">
                             <span className="text-xs text-slate-400 flex items-center gap-1"><MapPin size={10} /> {job.location}</span>
