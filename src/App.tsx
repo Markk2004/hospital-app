@@ -230,21 +230,36 @@ const depreciationData = [
 ];
 
 // --- COMPONENT: TOAST NOTIFICATION (POPUP) ---
-const Toast = ({ message, show, onClose }: { message: string, show: boolean, onClose: () => void }) => {
+const Toast = ({ message, show, type = 'success', onClose }: { message: string, show: boolean, type?: 'success' | 'error' | 'warning', onClose: () => void }) => {
   useEffect(() => {
     if (show) {
-      const timer = setTimeout(onClose, 3000); // Auto close in 3s
+      const timer = setTimeout(onClose, 4000); // Auto close in 4s
       return () => clearTimeout(timer);
     }
   }, [show, onClose]);
 
   if (!show) return null;
 
+  const styles = {
+    success: 'bg-slate-800 text-white border-slate-700',
+    error: 'bg-red-600 text-white border-red-700',
+    warning: 'bg-orange-500 text-white border-orange-600'
+  };
+
+  const icons = {
+    success: Check,
+    error: AlertTriangle,
+    warning: AlertCircle
+  };
+
+  const Icon = icons[type];
+
   return (
-    <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-top-4">
-      <div className="bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-slate-700">
-        <div className="bg-green-500 rounded-full p-1"><Check className="w-3 h-3 text-white" /></div>
-        <span className="font-medium text-sm">{message}</span>
+    <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-top-4 w-full max-w-sm px-4">
+      <div className={`${styles[type]} px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border`}>
+        <div className="bg-white/20 rounded-full p-2"><Icon className="w-5 h-5 text-white" /></div>
+        <span className="font-bold text-sm">{message}</span>
+        <button onClick={onClose} className="ml-auto text-white/60 hover:text-white"><X size={18}/></button>
       </div>
     </div>
   );
@@ -443,141 +458,136 @@ const MobileLoginPage = ({ onLogin = () => {} }: { onLogin: () => void }) => {
   };
 
   return (
-    // Changed: overflow-hidden -> overflow-y-auto, added min-h-screen to inner container for centering
-    <div className="min-h-screen w-full font-sans relative bg-blue-600 overflow-y-auto selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen w-full bg-slate-50 font-sans relative flex flex-col items-center justify-start overflow-y-auto selection:bg-blue-100 selection:text-blue-900">
       
-      {/* Background Gradient (Fixed) */}
-      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-blue-600 via-indigo-700 to-slate-900 opacity-90 z-0"></div>
+      {/* 1. Background Gradient Header */}
+      <div className="absolute top-0 w-full h-[45vh] bg-blue-600 rounded-b-[40px] shadow-lg z-0 overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-600 via-indigo-700 to-slate-900 opacity-90"></div>
+        <div className="absolute top-[-50px] right-[-50px] w-40 h-40 bg-white opacity-10 rounded-full blur-2xl"></div>
+        <div className="absolute top-[20%] left-[-30px] w-24 h-24 bg-cyan-400 opacity-20 rounded-full blur-xl"></div>
+      </div>
+
+      {/* 2. Content Container */}
+      <div className="relative z-10 w-full max-w-md px-6 pt-12 pb-6 flex flex-col items-center">
         
-      {/* Decorative Circles (Fixed) */}
-      <div className="fixed top-[-50px] right-[-50px] w-60 h-60 bg-white opacity-10 rounded-full blur-3xl z-0"></div>
-      <div className="fixed bottom-[-30px] left-[-30px] w-40 h-40 bg-cyan-400 opacity-20 rounded-full blur-2xl z-0"></div>
-
-      {/* Content Container - Use min-h-screen and flex to center content, allowing scroll if needed */}
-      <div className="relative z-10 min-h-screen w-full flex flex-col items-center justify-center py-8 px-6">
-        <div className="w-full max-w-md flex flex-col items-center">
-        
-          {/* Branding Section */}
-          <div className="text-center text-white mb-8 w-full animate-in fade-in slide-in-from-top-4 duration-700">
-             
-             
-             <h1 className="text-3xl font-extrabold tracking-tight leading-tight mb-2">
-               Hospital <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">Asset</span><br/>Management
-             </h1
-             >
-             
-             <div className="h-6 flex items-center justify-center">
-                <p className="text-sm text-blue-100/80 font-light flex items-center gap-1">
-                  {text}<span className="w-0.5 h-4 bg-blue-200 animate-pulse"></span>
-                </p>
-             </div>
-          </div>
-
-          {/* Login Card */}
-          <div className="w-full bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-             <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-slate-800">ยินดีต้อนรับกลับ</h2>
-                <p className="text-slate-500 text-xs mt-1">ลงชื่อเข้าใช้งานระบบด้วยรหัสพนักงาน</p>
-             </div>
-             
-             <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Username Input */}
-                <div className="space-y-1.5 group">
-                  <label className="text-xs font-bold text-slate-600 ml-1">รหัสพนักงาน / อีเมล</label>
-                  <div className="relative transition-transform duration-300 focus-within:scale-[1.02]">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                    </div>
-                    <input 
-                      type="text" 
-                      name="username" 
-                      required 
-                      className="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm" 
-                      placeholder="เช่น admin@hospital.com" 
-                      value={formData.username} 
-                      onChange={handleChange} 
-                    />
-                  </div>
-                </div>
-
-                {/* Password Input */}
-                <div className="space-y-1.5 group">
-                  <div className="flex justify-between items-center ml-1">
-                     <label className="text-xs font-bold text-slate-600">รหัสผ่าน</label>
-                     <a href="#" className="text-[10px] font-medium text-blue-600 hover:text-blue-700">ลืมรหัสผ่าน?</a>
-                  </div>
-                  <div className="relative transition-transform duration-300 focus-within:scale-[1.02]">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                    </div>
-                    <input 
-                      type={showPassword ? "text" : "password"} 
-                      name="password" 
-                      required 
-                      className="block w-full pl-11 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm" 
-                      placeholder="••••••••" 
-                      value={formData.password} 
-                      onChange={handleChange} 
-                    />
-                    <button 
-                      type="button" 
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center" 
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5 text-slate-400" /> : <Eye className="h-5 w-5 text-slate-400" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Remember Me Checkbox */}
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={rememberMe} 
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-xs text-slate-600 font-medium">จดจำรหัสผ่าน</span>
-                  </label>
-                </div>
-
-                {/* Submit Button */}
-                <button 
-                  type="submit" 
-                  disabled={isLoading || isSuccess} 
-                  className={`w-full flex items-center justify-center py-4 px-4 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 transform active:scale-95 mt-2 ${
-                    isSuccess 
-                      ? 'bg-emerald-500 hover:bg-emerald-600 ring-2 ring-emerald-500/50' 
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
-                  }`}
-                >
-                  {isLoading ? (
-                    <Loader2 className="animate-spin h-5 w-5" />
-                  ) : isSuccess ? (
-                    <span className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
-                      เข้าสู่ระบบสำเร็จ <ShieldCheck className="h-5 w-5"/>
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      เข้าสู่ระบบ <ArrowRight className="h-5 w-5" />
-                    </span>
-                  )}
-                </button>
-             </form>
-             
-             {/* Quick Features (Icon Grid) */}
-             <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
-                
-             </div>
-          </div>
-
-          {/* Footer */}
-          <p className="mt-8 text-[10px] text-blue-100/80 font-medium">
-            © 2025 Hospital Asset System. Secure Connection.
-          </p>
-
+        {/* Branding Section */}
+        <div className="text-center text-white mb-8 w-full animate-in fade-in slide-in-from-top-4 duration-700">
+          
+           <h1 className="text-3xl font-extrabold tracking-tight leading-tight mb-2">
+             Hospital <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">Asset</span><br/>Management
+           </h1>
+           
+           <div className="h-6 flex items-center justify-center">
+              <p className="text-sm text-blue-100/80 font-light flex items-center gap-1">
+                {text}<span className="w-0.5 h-4 bg-blue-200 animate-pulse"></span>
+              </p>
+           </div>
         </div>
+
+        {/* Login Card */}
+        <div className="w-full bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+           <div className="text-center mb-6">
+              <h2 className="text-xl font-bold text-slate-800">ยินดีต้อนรับกลับ</h2>
+              <p className="text-slate-400 text-xs mt-1">ลงชื่อเข้าใช้งานระบบด้วยรหัสพนักงาน</p>
+           </div>
+           
+           <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Username Input */}
+              <div className="space-y-1.5 group">
+                <label className="text-xs font-bold text-slate-600 ml-1">รหัสพนักงาน / อีเมล</label>
+                <div className="relative transition-transform duration-300 focus-within:scale-[1.02]">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                  </div>
+                  <input 
+                    type="text" 
+                    name="username" 
+                    required 
+                    className="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm" 
+                    placeholder="เช่น admin@hospital.com" 
+                    value={formData.username} 
+                    onChange={handleChange} 
+                  />
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div className="space-y-1.5 group">
+                <div className="flex justify-between items-center ml-1">
+                   <label className="text-xs font-bold text-slate-600">รหัสผ่าน</label>
+                   <a href="#" className="text-[10px] font-medium text-blue-600 hover:text-blue-700">ลืมรหัสผ่าน?</a>
+                </div>
+                <div className="relative transition-transform duration-300 focus-within:scale-[1.02]">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                  </div>
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    name="password" 
+                    required 
+                    className="block w-full pl-11 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm" 
+                    placeholder="••••••••" 
+                    value={formData.password} 
+                    onChange={handleChange} 
+                  />
+                  <button 
+                    type="button" 
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center" 
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5 text-slate-400" /> : <Eye className="h-5 w-5 text-slate-400" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember Me Checkbox */}
+              <div className="flex items-center justify-between">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={rememberMe} 
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-xs text-slate-600 font-medium">จดจำรหัสผ่าน</span>
+                </label>
+              </div>
+
+              {/* Submit Button */}
+              <button 
+                type="submit" 
+                disabled={isLoading || isSuccess} 
+                className={`w-full flex items-center justify-center py-4 px-4 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 transform active:scale-95 mt-2 ${
+                  isSuccess 
+                    ? 'bg-emerald-500 hover:bg-emerald-600 ring-2 ring-emerald-500/50' 
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                }`}
+              >
+                {isLoading ? (
+                  <Loader2 className="animate-spin h-5 w-5" />
+                ) : isSuccess ? (
+                  <span className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                    เข้าสู่ระบบสำเร็จ <ShieldCheck className="h-5 w-5"/>
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    เข้าสู่ระบบ <ArrowRight className="h-5 w-5" />
+                  </span>
+                )}
+              </button>
+           </form>
+           
+           {/* Quick Features (Icon Grid) */}
+           <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
+              
+           </div>
+        </div>
+
+        {/* Footer */}
+        <p className="mt-8 text-[10px] text-slate-400/80 font-medium">
+          © 2025 Hospital Asset System. Secure Connection.
+        </p>
+
       </div>
     </div>
   );
@@ -930,11 +940,27 @@ const DashboardView = ({ jobs, inventory, onNavigate }: { jobs: Job[]; inventory
 };
 
 // --- VIEW: MAINTENANCE SYSTEM ---
-const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, onShowToast }: { jobs: Job[]; inventory: Part[]; onUpdateJob: (j: Job) => void; onAddJob: (j: Job) => void; onUsePart: (pid: string) => void; onShowToast: (msg: string) => void; }) => {
+const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, onShowToast }: { jobs: Job[]; inventory: Part[]; onUpdateJob: (j: Job) => void; onAddJob: (j: Job) => void; onUsePart: (pid: string) => void; onShowToast: (msg: string, type?: 'success' | 'error' | 'warning') => void; }) => {
   const [activeView, setActiveView] = useState('board');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const getJobsByStatus = (status: Job['status']) => jobs.filter(j => j.status === status);
+
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentJobs = jobs.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(jobs.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   const handleUpdateJob = (updatedJob: Job) => {
     onUpdateJob(updatedJob);
@@ -959,13 +985,16 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
     };
     onAddJob(newJob);
     setActiveView('list');
-    onShowToast("สร้างใบงานซ่อมใหม่แล้ว!");
+    
+    // Alert logic for urgent jobs
+    if (formData.urgency === 'high') {
+        onShowToast(`แจ้งเตือน: มีงานซ่อมด่วนใหม่! (${newJob.assetName})`, 'error');
+    } else {
+        onShowToast("สร้างใบงานซ่อมใหม่แล้ว!", 'success');
+    }
   };
 
   const handleSelectJob = (job: Job) => {
-    if (job.urgency === 'high' && job.status !== 'completed') {
-      alert(`แจ้งเตือน: งานซ่อมด่วน (${job.id}) - ${job.assetName}`);
-    }
     setSelectedJob(job);
   };
 
@@ -988,16 +1017,19 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
         {activeView === 'form' && <RepairRequestForm onCancel={() => setActiveView('list')} onSubmit={handleAddNewJob} />}
         
         {activeView === 'list' && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-            <div className="overflow-x-auto">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 flex flex-col h-full max-h-[calc(100vh-200px)]">
+            <div className="overflow-x-auto flex-1">
               <table className="w-full text-sm text-left whitespace-nowrap md:whitespace-normal">
-                <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 sticky top-0">
                   <tr><th className="px-6 py-4">Job ID</th><th className="px-6 py-4">อุปกรณ์</th><th className="px-6 py-4">อาการ</th><th className="px-6 py-4 text-center">สถานะ</th></tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {jobs.map(job => (
-                    <tr key={job.id} onClick={() => handleSelectJob(job)} className="hover:bg-blue-50/30 transition-colors cursor-pointer">
-                      <td className="px-6 py-4 font-bold text-blue-600">{job.id}</td>
+                  {currentJobs.map(job => (
+                    <tr key={job.id} onClick={() => handleSelectJob(job)} className={`hover:bg-blue-50/30 transition-colors cursor-pointer ${job.urgency === 'high' ? 'bg-red-50/30' : ''}`}>
+                      <td className="px-6 py-4 font-bold text-blue-600">
+                        {job.id}
+                        {job.urgency === 'high' && <span className="ml-2 inline-flex w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
+                      </td>
                       <td className="px-6 py-4"><div>{job.assetName}</div><div className="text-xs text-slate-400">{job.location}</div></td>
                       <td className="px-6 py-4 text-slate-600 max-w-xs truncate">{job.issue}</td>
                       <td className="px-6 py-4 text-center"><StatusBadge status={job.status} /></td>
@@ -1005,6 +1037,28 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
                   ))}
                 </tbody>
               </table>
+            </div>
+            
+            {/* Pagination Controls */}
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50">
+                <span className="text-xs text-slate-500 font-medium">แสดง {indexOfFirstItem + 1} ถึง {Math.min(indexOfLastItem, jobs.length)} จาก {jobs.length} รายการ</span>
+                <div className="flex items-center gap-2">
+                    <button 
+                        onClick={() => handlePageChange(currentPage - 1)} 
+                        disabled={currentPage === 1}
+                        className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 text-xs font-bold disabled:opacity-50 hover:bg-slate-50"
+                    >
+                        ย้อนกลับ
+                    </button>
+                    <span className="text-xs font-bold text-slate-700 px-2">หน้า {currentPage} / {totalPages}</span>
+                    <button 
+                        onClick={() => handlePageChange(currentPage + 1)} 
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 text-xs font-bold disabled:opacity-50 hover:bg-slate-50"
+                    >
+                        ถัดไป
+                    </button>
+                </div>
             </div>
           </div>
         )}
@@ -1019,7 +1073,7 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
                   </div>
                   <div className="p-2 space-y-2 overflow-y-auto flex-1">
                     {getJobsByStatus(status).map(job => (
-                      <div key={job.id} onClick={() => handleSelectJob(job)} className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer group">
+                      <div key={job.id} onClick={() => handleSelectJob(job)} className={`bg-white p-3 rounded-lg border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer group ${job.urgency === 'high' ? 'ring-2 ring-red-100 border-red-200' : ''}`}>
                          <div className="flex justify-between mb-2">
                            <span className="text-[10px] font-bold bg-slate-50 px-1 rounded border text-slate-500">{job.id}</span>
                            <UrgencyBadge level={job.urgency} />
@@ -1039,7 +1093,7 @@ const MaintenanceView = ({ jobs, inventory, onUpdateJob, onAddJob, onUsePart, on
         )}
       </div>
 
-      {selectedJob && <JobDetailModal job={selectedJob} inventory={inventory} onUsePart={onUsePart} onClose={() => setSelectedJob(null)} onSave={handleUpdateJob} onShowToast={onShowToast} />}
+      {selectedJob && <JobDetailModal job={selectedJob} inventory={inventory} onUsePart={onUsePart} onClose={() => setSelectedJob(null)} onSave={handleUpdateJob} onShowToast={(msg) => onShowToast(msg, 'success')} />}
     </div>
   );
 };
@@ -1054,10 +1108,10 @@ export default function App() {
   const [partsInventory, setPartsInventory] = useState<Part[]>(initialPartsInventoryData);
   
   // Toast State
-  const [toast, setToast] = useState<{ show: boolean, message: string }>({ show: false, message: '' });
+  const [toast, setToast] = useState<{ show: boolean, message: string, type: 'success' | 'error' | 'warning' }>({ show: false, message: '', type: 'success' });
 
-  const triggerToast = (msg: string) => {
-    setToast({ show: true, message: msg });
+  const triggerToast = (msg: string, type: 'success' | 'error' | 'warning' = 'success') => {
+    setToast({ show: true, message: msg, type });
   };
 
   const handleAddJob = (newJob: Job) => {
@@ -1137,7 +1191,7 @@ export default function App() {
         </div>
         
         {/* Render Toast Globally */}
-        <Toast show={toast.show} message={toast.message} onClose={() => setToast({ ...toast, show: false })} />
+        <Toast show={toast.show} message={toast.message} type={toast.type} onClose={() => setToast({ ...toast, show: false })} />
       </main>
     </div>
   );
