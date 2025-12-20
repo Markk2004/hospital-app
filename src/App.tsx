@@ -20,7 +20,7 @@ import {
   Layout,
   Trash2,
   FileText,
-  QrCode,
+  // QrCode,  <-- เอาออกแล้ว เพื่อแก้ Error TS6133
   AlertTriangle,
   ChevronRight,
   Calculator,
@@ -297,7 +297,8 @@ const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
 
 // --- MODAL: JOB DETAIL ---
 const JobDetailModal = ({ job, onClose, onSave }: { job: Job; onClose: () => void; onSave: (j: Job) => void }) => {
-  const [status, setStatus] = useState<Job['status']>(job.status);
+  // แก้ไข: เอา setStatus ออก เพราะไม่ได้ใช้งาน (แก้ Error TS6133)
+  const [status] = useState<Job['status']>(job.status);
   const [repairNote, setRepairNote] = useState(job.repairNote || '');
   const [usedParts, setUsedParts] = useState<Part[]>(job.partsUsed || []);
   const [selectedPartId, setSelectedPartId] = useState('');
@@ -460,7 +461,11 @@ const RepairRequestForm = ({ onCancel, onSubmit }: { onCancel: () => void; onSub
       </div>
 
       <div className="space-y-6">
-        <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300 flex items-center justify-between group cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors">
+        {/* ปรับปรุงตรงนี้: เพิ่ม onClick ให้แจ้งเตือนว่าปิดระบบ และยังคง UI เดิมไว้ */}
+        <div 
+            onClick={() => alert("ระบบ QR Code ปิดปรับปรุงชั่วคราว")}
+            className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300 flex items-center justify-between group cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
+        >
            <div className="flex items-center gap-4"><div className="p-3 bg-white rounded-lg shadow-sm group-hover:scale-110 transition-transform"><Camera className="w-6 h-6 text-slate-600" /></div><div><h4 className="font-bold text-slate-700">Scan QR Code / Barcode</h4><p className="text-xs text-slate-400">สแกนที่ตัวเครื่องเพื่อดึงข้อมูลอัตโนมัติ</p></div></div><ChevronRight className="w-5 h-5 text-slate-400" />
         </div>
 
