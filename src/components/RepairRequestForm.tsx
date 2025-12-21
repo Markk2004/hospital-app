@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Camera, ChevronRight, CheckCircle2, Clock, AlertTriangle, FileText } from 'lucide-react';
+import { Search, CheckCircle2, Clock, AlertTriangle, FileText } from 'lucide-react';
 import type { FormData } from '../types';
 
 interface RepairRequestFormProps {
@@ -36,22 +36,6 @@ export const RepairRequestForm: React.FC<RepairRequestFormProps> = ({ onCancel, 
       </div>
 
       <div className="space-y-5 md:space-y-6">
-        <div 
-          onClick={() => alert("ระบบ QR Code ปิดปรับปรุงชั่วคราว")}
-          className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300 flex items-center justify-between group cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
-        >
-           <div className="flex items-center gap-4">
-             <div className="p-3 bg-white rounded-lg shadow-sm group-hover:scale-110 transition-transform">
-               <Camera className="w-6 h-6 text-slate-600" />
-             </div>
-             <div>
-               <h4 className="font-bold text-slate-700 text-sm md:text-base">Scan QR Code</h4>
-               <p className="text-xs text-slate-400">สแกนเพื่อดึงข้อมูลอัตโนมัติ</p>
-             </div>
-           </div>
-           <ChevronRight className="w-5 h-5 text-slate-400" />
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
