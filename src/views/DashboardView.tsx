@@ -7,7 +7,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line, Area, AreaChart
+  PieChart, Pie, Cell
 } from 'recharts';
 import type { Job, Part } from '../types';
 import { StatCard } from '../components/StatCard';
@@ -153,7 +153,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
                    onMouseEnter={(_, index) => setActiveIndex(index)}
                    onMouseLeave={() => setActiveIndex(null)}
                  >
-                    {dynamicAssetStatusData.map((entry, index) => (
+                    {dynamicAssetStatusData.map((_, index) => (
                       <Cell 
                         key={`cell-${index}`} 
                         fill={`url(#gradient-${index})`}
@@ -319,7 +319,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <Wrench className="w-5 h-5 text-blue-600" /> งานซ่อมล่าสุด
             </h3>
-            <button onClick={() => onNavigate('maintenance')} className="text-xs text-blue-600 hover:underline">
+            <button onClick={() => onNavigate('maintenance-list')} className="text-xs text-blue-600 hover:underline">
               ดูทั้งหมด
             </button>
           </div>
@@ -360,7 +360,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
                </div>
              </div>
              <button 
-               onClick={() => onNavigate('parts')}
+               onClick={() => onNavigate('parts-inventory')}
                className="flex items-center gap-1 text-xs bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-sm"
              >
                ดูทั้งหมด
@@ -406,7 +406,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
                            ? 'bg-red-50 border-red-200 hover:border-red-300' 
                            : 'bg-orange-50 border-orange-200 hover:border-orange-300'
                        }`}
-                       onClick={() => onNavigate('parts')}
+                       onClick={() => onNavigate('parts-inventory')}
                      >
                        <div className="flex items-start justify-between mb-3">
                          <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -465,7 +465,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
                          }`}
                          onClick={(e) => {
                            e.stopPropagation();
-                           onNavigate('parts');
+                           onNavigate('parts-inventory');
                          }}
                        >
                          <ShoppingCart className="w-4 h-4" />
@@ -477,7 +477,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
 
                  {totalAlerts > 6 && (
                    <button 
-                     onClick={() => onNavigate('parts')}
+                     onClick={() => onNavigate('parts-inventory')}
                      className="w-full p-3 text-center text-sm text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 font-semibold transition-colors"
                    >
                      ดูอีก {totalAlerts - 6} รายการ →

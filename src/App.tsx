@@ -10,7 +10,13 @@ import {
   User,
   Menu,
   X,
-  Activity
+  Activity,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  TrendingDown,
+  ShoppingCart,
+  ClipboardList
 } from 'lucide-react';
 
 // Import Types
@@ -36,6 +42,10 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(false);
   const [jobs, setJobs] = useState<Job[]>(initialJobs);
   const [partsInventory, setPartsInventory] = useState<Part[]>(initialPartsInventoryData);
+  
+  // Dropdown states
+  const [assetMenuOpen, setAssetMenuOpen] = useState(false);
+  const [maintenanceMenuOpen, setMaintenanceMenuOpen] = useState(false);
   
   // Toast State
   const [toast, setToast] = useState<{ 
@@ -67,6 +77,7 @@ export default function App() {
     ));
   };
 
+  // Sidebar Menu Items
   const SidebarItem = ({ icon: Icon, label, id }: { icon: any; label: string; id: string }) => (
     <div 
       onClick={() => { 
@@ -81,6 +92,62 @@ export default function App() {
     >
       <Icon className={`w-5 h-5 flex-shrink-0 ${activeTab === id ? 'text-blue-600' : 'text-slate-400'}`} />
       <span className="truncate">{label}</span>
+    </div>
+  );
+
+  // Dropdown Menu Parent
+  const DropdownParent = ({ 
+    icon: Icon, 
+    label, 
+    isOpen, 
+    onClick 
+  }: { 
+    icon: any; 
+    label: string; 
+    isOpen: boolean; 
+    onClick: () => void;
+  }) => (
+    <div 
+      onClick={onClick}
+      className={`flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden ${
+        isOpen 
+          ? 'bg-blue-50 text-blue-600 font-semibold' 
+          : 'text-slate-600 hover:bg-slate-50'
+      }`}
+    >
+      <div className="flex items-center space-x-3">
+        <Icon className={`w-5 h-5 flex-shrink-0 ${isOpen ? 'text-blue-600' : 'text-slate-400'}`} />
+        <span className="truncate">{label}</span>
+      </div>
+      {isSidebarOpen && (
+        isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+      )}
+    </div>
+  );
+
+  // Dropdown Menu Child
+  const DropdownChild = ({ 
+    icon: Icon, 
+    label, 
+    id 
+  }: { 
+    icon: any; 
+    label: string; 
+    id: string;
+  }) => (
+    <div 
+      onClick={() => { 
+        setActiveTab(id); 
+        if(window.innerWidth < 768) setIsSidebarOpen(false); 
+      }}
+      className={`flex items-center space-x-3 pl-12 pr-4 py-2.5 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden ${
+        activeTab === id 
+          ? 'bg-blue-100 text-blue-700 font-semibold' 
+          : 'text-slate-600 hover:bg-slate-50'
+      }`}
+    >
+      <Icon className={`w-4 h-4 flex-shrink-0 ${activeTab === id ? 'text-blue-600' : 'text-slate-400'}`} />
+      <span className="truncate text-sm">{label}</span>
     </div>
   );
 
@@ -140,15 +207,46 @@ export default function App() {
         </div>
         
         <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
-          <SidebarItem icon={LayoutDashboard} label={isSidebarOpen ? "ภาพรวม (Dashboard)" : ""} id="dashboard" />
-          <SidebarItem icon={Wrench} label={isSidebarOpen ? "แจ้งซ่อม (Maintenance)" : ""} id="maintenance" />
-          <div className="pt-4 pb-2">
-            <div className="h-px bg-slate-100 w-full"></div>
-            {isSidebarOpen && <p className="text-xs font-bold text-slate-400 mt-4 mb-2 px-2">ASSET MANAGEMENT</p>}
+          {/* หน้าหลัก - Dashboard */}
+          <SidebarItem 
+            icon={LayoutDashboard} 
+            label={isSidebarOpen ? "หน้าหลัก" : ""} 
+            id="dashboard" 
+          />
+          
+          {/* ครุภัณฑ์ - Dropdown */}
+          <div className="space-y-1">
+            <DropdownParent 
+              icon={Stethoscope} 
+              label={isSidebarOpen ? "ครุภัณฑ์" : ""} 
+              isOpen={assetMenuOpen}
+              onClick={() => setAssetMenuOpen(!assetMenuOpen)}
+            />
+            {assetMenuOpen && isSidebarOpen && (
+              <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
+                <DropdownChild icon={FileText} label="ลงทะเบียน" id="asset-register" />
+                <DropdownChild icon={ArrowRightLeft} label="ระบบยืม-คืน" id="asset-borrow" />
+                <DropdownChild icon={TrendingDown} label="ค่าเสื่อมราคา" id="asset-depreciation" />
+              </div>
+            )}
           </div>
-          <SidebarItem icon={Stethoscope} label={isSidebarOpen ? "ทะเบียนครุภัณฑ์" : ""} id="assets" />
-          <SidebarItem icon={ArrowRightLeft} label={isSidebarOpen ? "ระบบยืม-คืน" : ""} id="loans" />
-          <SidebarItem icon={Package} label={isSidebarOpen ? "คลังอะไหล่" : ""} id="parts" />
+
+          {/* ซ่อมบำรุง - Dropdown */}
+          <div className="space-y-1">
+            <DropdownParent 
+              icon={Wrench} 
+              label={isSidebarOpen ? "ซ่อมบำรุง" : ""} 
+              isOpen={maintenanceMenuOpen}
+              onClick={() => setMaintenanceMenuOpen(!maintenanceMenuOpen)}
+            />
+            {maintenanceMenuOpen && isSidebarOpen && (
+              <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
+                <DropdownChild icon={ClipboardList} label="รายการซ่อม" id="maintenance-list" />
+                <DropdownChild icon={Package} label="คลังอะไหล่" id="parts-inventory" />
+                <DropdownChild icon={ShoppingCart} label="สั่งซื้ออะไหล่" id="parts-order" />
+              </div>
+            )}
+          </div>
         </nav>
         
         <div className="p-4 border-t border-slate-100 shrink-0">
@@ -182,7 +280,13 @@ export default function App() {
                <Menu size={24} />
              </button>
              <h1 className="text-lg md:text-xl font-bold text-slate-800 truncate">
-               {activeTab === 'dashboard' ? 'Dashboard' : activeTab === 'maintenance' ? 'Maintenance' : 'Assets Registry'}
+               {activeTab === 'dashboard' && 'หน้าหลัก'}
+               {activeTab === 'asset-register' && 'ลงทะเบียนครุภัณฑ์'}
+               {activeTab === 'asset-borrow' && 'ระบบยืม-คืนครุภัณฑ์'}
+               {activeTab === 'asset-depreciation' && 'ค่าเสื่อมราคา'}
+               {activeTab === 'maintenance-list' && 'รายการซ่อมบำรุง'}
+               {activeTab === 'parts-inventory' && 'คลังอะไหล่'}
+               {activeTab === 'parts-order' && 'สั่งซื้ออะไหล่'}
              </h1>
            </div>
            <div className="flex items-center gap-4">
@@ -195,7 +299,7 @@ export default function App() {
                />
              </div>
              <button 
-               onClick={() => setActiveTab('parts')}
+               onClick={() => setActiveTab('parts-inventory')}
                className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
                title={`การแจ้งเตือนอะไหล่: ${totalAlerts} รายการ`}
              >
@@ -223,7 +327,7 @@ export default function App() {
             />
           )}
           
-          {activeTab === 'maintenance' && (
+          {activeTab === 'maintenance-list' && (
             <MaintenanceView 
               jobs={jobs} 
               inventory={partsInventory} 
@@ -234,14 +338,32 @@ export default function App() {
             />
           )}
           
-          {activeTab === 'parts' && (
+          {activeTab === 'parts-inventory' && (
             <InventoryView inventory={partsInventory} />
           )}
           
-          {(activeTab !== 'dashboard' && activeTab !== 'maintenance' && activeTab !== 'parts') && (
-            <div className="flex flex-col items-center justify-center h-full text-slate-400">
-              <Package size={64} className="mb-4 opacity-20" />
-              <p>หน้า "{activeTab}" ยังไม่เปิดใช้งานใน Demo นี้</p>
+          {/* Placeholder pages */}
+          {(activeTab === 'asset-register' || 
+            activeTab === 'asset-borrow' || 
+            activeTab === 'asset-depreciation' || 
+            activeTab === 'parts-order') && (
+            <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mb-4">
+                {activeTab === 'asset-register' && <FileText className="w-10 h-10 text-blue-600" />}
+                {activeTab === 'asset-borrow' && <ArrowRightLeft className="w-10 h-10 text-blue-600" />}
+                {activeTab === 'asset-depreciation' && <TrendingDown className="w-10 h-10 text-blue-600" />}
+                {activeTab === 'parts-order' && <ShoppingCart className="w-10 h-10 text-blue-600" />}
+              </div>
+              <h3 className="text-xl font-bold text-slate-700 mb-2">
+                {activeTab === 'asset-register' && 'ลงทะเบียนครุภัณฑ์'}
+                {activeTab === 'asset-borrow' && 'ระบบยืม-คืนครุภัณฑ์'}
+                {activeTab === 'asset-depreciation' && 'ค่าเสื่อมราคา'}
+                {activeTab === 'parts-order' && 'สั่งซื้ออะไหล่'}
+              </h3>
+              <p className="text-slate-500 text-center max-w-md">
+                หน้านี้กำลังอยู่ในระหว่างการพัฒนา<br/>
+                จะเปิดให้ใช้งานในเร็วๆ นี้
+              </p>
             </div>
           )}
         </div>
