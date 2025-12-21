@@ -30,10 +30,16 @@ export const MaintenanceView: React.FC<MaintenanceViewProps> = ({
 
   const getJobsByStatus = (status: Job['status']) => jobs.filter(j => j.status === status);
 
+  // เรียงลำดับตามความสำคัญ: high > medium > normal
+  const sortedJobs = [...jobs].sort((a, b) => {
+    const urgencyOrder = { high: 0, medium: 1, normal: 2 };
+    return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+  });
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentJobs = jobs.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(jobs.length / itemsPerPage);
+  const currentJobs = sortedJobs.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedJobs.length / itemsPerPage);
 
   const handlePageChange = (pageNumber: number) => {
     if (pageNumber >= 1 && pageNumber <= totalPages) {
@@ -122,6 +128,8 @@ export const MaintenanceView: React.FC<MaintenanceViewProps> = ({
                     <th className="px-6 py-4">Job ID</th>
                     <th className="px-6 py-4">อุปกรณ์</th>
                     <th className="px-6 py-4">อาการ</th>
+                    <th className="px-6 py-4">เวลาแจ้ง</th>
+                    <th className="px-6 py-4 text-center">ความเร่งด่วน</th>
                     <th className="px-6 py-4 text-center">สถานะ</th>
                   </tr>
                 </thead>
@@ -130,7 +138,7 @@ export const MaintenanceView: React.FC<MaintenanceViewProps> = ({
                     <tr 
                       key={job.id} 
                       onClick={() => handleSelectJob(job)} 
-                      className={`transition-colors cursor-pointer ${job.urgency === 'high' ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-blue-50/30'}`}
+                      className={`transition-colors cursor-pointer ${job.urgency === 'high' ? 'bg-red-50 hover:bg-red-100' : job.urgency === 'medium' ? 'bg-orange-50/50 hover:bg-orange-100/50' : 'hover:bg-blue-50/30'}`}
                     >
                       <td className="px-6 py-4 font-bold text-blue-600">
                         {job.id}
@@ -139,10 +147,19 @@ export const MaintenanceView: React.FC<MaintenanceViewProps> = ({
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div>{job.assetName}</div>
-                        <div className="text-xs text-slate-400">{job.location}</div>
+                        <div className="font-semibold text-slate-800">{job.assetName}</div>
+                        <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3" />
+                          {job.location}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-slate-600 max-w-xs truncate">{job.issue}</td>
+                      <td className="px-6 py-4">
+                        <div className="text-slate-700 font-medium text-xs">{job.date}</div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <UrgencyBadge urgency={job.urgency} />
+                      </td>
                       <td className="px-6 py-4 text-center">
                         <StatusBadge status={job.status} />
                       </td>
@@ -154,7 +171,7 @@ export const MaintenanceView: React.FC<MaintenanceViewProps> = ({
             
             <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50">
                 <span className="text-xs text-slate-500 font-medium">
-                  แสดง {indexOfFirstItem + 1} ถึง {Math.min(indexOfLastItem, jobs.length)} จาก {jobs.length} รายการ
+                  แสดง {indexOfFirstItem + 1} ถึง {Math.min(indexOfLastItem, sortedJobs.length)} จาก {sortedJobs.length} รายการ
                 </span>
                 <div className="flex items-center gap-2">
                     <button 
