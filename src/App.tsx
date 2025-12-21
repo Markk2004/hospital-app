@@ -27,6 +27,7 @@ import { MobileLoginPage } from './components/MobileLoginPage';
 // Import Views
 import { DashboardView } from './views/DashboardView';
 import { MaintenanceView } from './views/MaintenanceView';
+import { InventoryView } from './views/InventoryView';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -42,6 +43,11 @@ export default function App() {
     message: string; 
     type: 'success' | 'error' | 'warning' 
   }>({ show: false, message: '', type: 'success' });
+
+  // คำนวณจำนวนอะไหล่ที่ต้องแจ้งเตือน
+  const lowStockCount = partsInventory.filter(p => p.stock > 0 && p.stock < p.min).length;
+  const outOfStockCount = partsInventory.filter(p => p.stock === 0).length;
+  const totalAlerts = lowStockCount + outOfStockCount;
 
   const triggerToast = (msg: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ show: true, message: msg, type });
@@ -188,9 +194,21 @@ export default function App() {
                  className="pl-9 pr-4 py-2 rounded-lg bg-slate-100 border-none focus:ring-2 focus:ring-blue-500 w-64 text-sm" 
                />
              </div>
-             <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full">
+             <button 
+               onClick={() => setActiveTab('parts')}
+               className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+               title={`การแจ้งเตือนอะไหล่: ${totalAlerts} รายการ`}
+             >
                <Bell size={20} />
-               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+               {totalAlerts > 0 && (
+                 <>
+                   <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                   <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                     {totalAlerts > 9 ? '9+' : totalAlerts}
+                   </span>
+                 </>
+               )}
              </button>
            </div>
         </header>
@@ -216,7 +234,11 @@ export default function App() {
             />
           )}
           
-          {(activeTab !== 'dashboard' && activeTab !== 'maintenance') && (
+          {activeTab === 'parts' && (
+            <InventoryView inventory={partsInventory} />
+          )}
+          
+          {(activeTab !== 'dashboard' && activeTab !== 'maintenance' && activeTab !== 'parts') && (
             <div className="flex flex-col items-center justify-center h-full text-slate-400">
               <Package size={64} className="mb-4 opacity-20" />
               <p>หน้า "{activeTab}" ยังไม่เปิดใช้งานใน Demo นี้</p>

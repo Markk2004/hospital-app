@@ -1,5 +1,7 @@
 // Type Definitions for Hospital Asset Management System
 
+export type StockStatus = 'out_of_stock' | 'low_stock' | 'adequate' | 'overstocked';
+
 export interface Part {
   id: string;
   name: string;
@@ -8,6 +10,16 @@ export interface Part {
   min: number;
   unit: string;
   qty?: number;
+}
+
+export interface InventoryAlert {
+  id: string;
+  partId: string;
+  partName: string;
+  currentStock: number;
+  minStock: number;
+  status: StockStatus;
+  severity: 'critical' | 'warning' | 'info';
 }
 
 export interface Job {
