@@ -158,7 +158,7 @@ export const MaintenanceView: React.FC<MaintenanceViewProps> = ({
                         <div className="text-slate-700 font-medium text-xs">{job.date}</div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <UrgencyBadge urgency={job.urgency} />
+                        <UrgencyBadge level={job.urgency} />
                       </td>
                       <td className="px-6 py-4 text-center">
                         <StatusBadge status={job.status} />
