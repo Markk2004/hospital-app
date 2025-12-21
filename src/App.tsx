@@ -16,7 +16,10 @@ import {
   FileText,
   TrendingDown,
   ShoppingCart,
-  ClipboardList
+  ClipboardList,
+  Users,
+  FileBarChart,
+  PieChart
 } from 'lucide-react';
 
 // Import Types
@@ -46,6 +49,7 @@ export default function App() {
   // Dropdown states
   const [assetMenuOpen, setAssetMenuOpen] = useState(false);
   const [maintenanceMenuOpen, setMaintenanceMenuOpen] = useState(false);
+  const [reportMenuOpen, setReportMenuOpen] = useState(false);
   
   // Toast State
   const [toast, setToast] = useState<{ 
@@ -247,6 +251,30 @@ export default function App() {
               </div>
             )}
           </div>
+
+          {/* รายงาน - Dropdown */}
+          <div className="space-y-1">
+            <DropdownParent 
+              icon={FileBarChart} 
+              label={isSidebarOpen ? "รายงาน" : ""} 
+              isOpen={reportMenuOpen}
+              onClick={() => setReportMenuOpen(!reportMenuOpen)}
+            />
+            {reportMenuOpen && isSidebarOpen && (
+              <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
+                <DropdownChild icon={PieChart} label="สรุปภาพรวม" id="report-summary" />
+                <DropdownChild icon={FileBarChart} label="รายงานการซ่อม" id="report-maintenance" />
+                <DropdownChild icon={Package} label="รายงานอะไหล่" id="report-parts" />
+              </div>
+            )}
+          </div>
+
+          {/* ผู้ใช้งาน */}
+          <SidebarItem 
+            icon={Users} 
+            label={isSidebarOpen ? "ผู้ใช้งาน" : ""} 
+            id="users"
+          />
         </nav>
         
         <div className="p-4 border-t border-slate-100 shrink-0">
@@ -287,6 +315,10 @@ export default function App() {
                {activeTab === 'maintenance-list' && 'รายการซ่อมบำรุง'}
                {activeTab === 'parts-inventory' && 'คลังอะไหล่'}
                {activeTab === 'parts-order' && 'สั่งซื้ออะไหล่'}
+               {activeTab === 'report-summary' && 'สรุปภาพรวม'}
+               {activeTab === 'report-maintenance' && 'รายงานการซ่อม'}
+               {activeTab === 'report-parts' && 'รายงานอะไหล่'}
+               {activeTab === 'users' && 'ผู้ใช้งาน'}
              </h1>
            </div>
            <div className="flex items-center gap-4">
@@ -346,19 +378,31 @@ export default function App() {
           {(activeTab === 'asset-register' || 
             activeTab === 'asset-borrow' || 
             activeTab === 'asset-depreciation' || 
-            activeTab === 'parts-order') && (
+            activeTab === 'parts-order' ||
+            activeTab === 'report-summary' ||
+            activeTab === 'report-maintenance' ||
+            activeTab === 'report-parts' ||
+            activeTab === 'users') && (
             <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8">
               <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mb-4">
                 {activeTab === 'asset-register' && <FileText className="w-10 h-10 text-blue-600" />}
                 {activeTab === 'asset-borrow' && <ArrowRightLeft className="w-10 h-10 text-blue-600" />}
                 {activeTab === 'asset-depreciation' && <TrendingDown className="w-10 h-10 text-blue-600" />}
                 {activeTab === 'parts-order' && <ShoppingCart className="w-10 h-10 text-blue-600" />}
+                {activeTab === 'report-summary' && <PieChart className="w-10 h-10 text-blue-600" />}
+                {activeTab === 'report-maintenance' && <FileBarChart className="w-10 h-10 text-blue-600" />}
+                {activeTab === 'report-parts' && <Package className="w-10 h-10 text-blue-600" />}
+                {activeTab === 'users' && <Users className="w-10 h-10 text-blue-600" />}
               </div>
               <h3 className="text-xl font-bold text-slate-700 mb-2">
                 {activeTab === 'asset-register' && 'ลงทะเบียนครุภัณฑ์'}
                 {activeTab === 'asset-borrow' && 'ระบบยืม-คืนครุภัณฑ์'}
                 {activeTab === 'asset-depreciation' && 'ค่าเสื่อมราคา'}
                 {activeTab === 'parts-order' && 'สั่งซื้ออะไหล่'}
+                {activeTab === 'report-summary' && 'สรุปภาพรวม'}
+                {activeTab === 'report-maintenance' && 'รายงานการซ่อม'}
+                {activeTab === 'report-parts' && 'รายงานอะไหล่'}
+                {activeTab === 'users' && 'ผู้ใช้งาน'}
               </h3>
               <p className="text-slate-500 text-center max-w-md">
                 หน้านี้กำลังอยู่ในระหว่างการพัฒนา<br/>
