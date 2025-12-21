@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { 
   Stethoscope, ArrowRightLeft, Wrench, AlertCircle, Activity, 
   Clock, User, CheckCircle2, Package, AlertTriangle, TrendingDown, 
-  ChevronRight, ShoppingCart
+  ChevronRight, ShoppingCart, TrendingUp, DollarSign
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
+  PieChart, Pie, Cell, Legend, LineChart, Line, Area, AreaChart
 } from 'recharts';
 import type { Job, Part } from '../types';
 import { StatCard } from '../components/StatCard';
@@ -21,11 +21,55 @@ interface DashboardViewProps {
 }
 
 const depreciationData = [
-  { name: 'เครื่องช่วยหายใจ', cost: 1200000, current: 800000 },
-  { name: 'เตียงผู้ป่วยไฟฟ้า', cost: 500000, current: 350000 },
-  { name: 'เครื่อง X-Ray', cost: 3500000, current: 1200000 },
-  { name: 'Monitor EKG', cost: 300000, current: 150000 },
+  { name: 'เครื่องช่วยหายใจ', cost: 1200000, current: 800000, depreciation: 400000 },
+  { name: 'เตียงผู้ป่วยไฟฟ้า', cost: 500000, current: 350000, depreciation: 150000 },
+  { name: 'เครื่อง X-Ray', cost: 3500000, current: 1200000, depreciation: 2300000 },
+  { name: 'Monitor EKG', cost: 300000, current: 150000, depreciation: 150000 },
 ];
+
+// Custom Tooltip สำหรับ Pie Chart
+const CustomPieTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white px-4 py-3 rounded-xl shadow-lg border border-slate-200">
+        <p className="font-bold text-slate-800 mb-1">{payload[0].name}</p>
+        <p className="text-2xl font-bold" style={{ color: payload[0].payload.color }}>
+          {payload[0].value} เครื่อง
+        </p>
+        <p className="text-xs text-slate-500 mt-1">
+          {((payload[0].value / payload[0].payload.total) * 100).toFixed(1)}% ของทั้งหมด
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+// Custom Tooltip สำหรับ Bar Chart
+const CustomBarTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white px-4 py-3 rounded-xl shadow-lg border border-slate-200">
+        <p className="font-bold text-slate-800 mb-2">{payload[0].payload.name}</p>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-xs text-slate-600">ราคาทุน:</span>
+            <span className="font-bold text-slate-700">฿{payload[0].value.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-xs text-slate-600">มูลค่าปัจจุบัน:</span>
+            <span className="font-bold text-blue-600">฿{payload[1].value.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-100">
+            <span className="text-xs text-slate-600">ค่าเสื่อมราคา:</span>
+            <span className="font-bold text-red-600">฿{(payload[0].value - payload[1].value).toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, onNavigate }) => {
   const inRepairCount = jobs.filter(j => j.status !== 'completed').length;
@@ -35,10 +79,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
   const ready = totalAssets - inRepairCount - borrowed - disposed;
 
   const dynamicAssetStatusData = [
-    { name: 'พร้อมใช้งาน', value: ready, color: '#10B981' },
-    { name: 'ถูกยืมใช้งาน', value: borrowed, color: '#3B82F6' },
-    { name: 'ส่งซ่อม', value: inRepairCount, color: '#EF4444' },
-    { name: 'จำหน่ายออก', value: disposed, color: '#9CA3AF' },
+    { name: 'พร้อมใช้งาน', value: ready, color: '#10B981', total: totalAssets },
+    { name: 'ถูกยืมใช้งาน', value: borrowed, color: '#3B82F6', total: totalAssets },
+    { name: 'ส่งซ่อม', value: inRepairCount, color: '#EF4444', total: totalAssets },
+    { name: 'จำหน่ายออก', value: disposed, color: '#9CA3AF', total: totalAssets },
   ];
 
   // จัดกลุ่มอะไหล่ตามสถานะ
@@ -48,13 +92,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
   const totalAlerts = outOfStockParts.length + lowStockParts.length;
 
   const [isMobile, setIsMobile] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const chartHeight = isMobile ? 220 : 320;
+  const chartHeight = isMobile ? 240 : 300;
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-slate-50/50 animate-in fade-in duration-300 h-full overflow-y-auto">
@@ -72,60 +118,198 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-1 flex flex-col h-auto lg:h-96">
-          <h3 className="text-lg font-semibold text-slate-800 mb-2">สถานะครุภัณฑ์ (Real-time)</h3>
+        {/* Pie Chart - Donut Style */}
+        <div className="bg-gradient-to-br from-white to-blue-50/30 p-6 rounded-2xl shadow-lg border border-slate-200 lg:col-span-1 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 mb-1">สถานะครุภัณฑ์</h3>
+              <p className="text-xs text-slate-500">อัพเดทแบบ Real-time</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <Activity className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
           
-          <div className="flex-1" style={{ minHeight: chartHeight }}>
+          <div className="flex-1 relative" style={{ minHeight: chartHeight }}>
              <ResponsiveContainer width="100%" height={chartHeight}>
                <PieChart>
-                 <Pie data={dynamicAssetStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" cornerRadius={4}>
-                    {dynamicAssetStatusData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                 <defs>
+                   {dynamicAssetStatusData.map((entry, index) => (
+                     <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
+                       <stop offset="0%" stopColor={entry.color} stopOpacity={0.8}/>
+                       <stop offset="100%" stopColor={entry.color} stopOpacity={1}/>
+                     </linearGradient>
+                   ))}
+                 </defs>
+                 <Pie 
+                   data={dynamicAssetStatusData} 
+                   cx="50%" 
+                   cy="50%" 
+                   innerRadius={isMobile ? 55 : 70}
+                   outerRadius={isMobile ? 75 : 95}
+                   paddingAngle={3}
+                   dataKey="value" 
+                   cornerRadius={6}
+                   onMouseEnter={(_, index) => setActiveIndex(index)}
+                   onMouseLeave={() => setActiveIndex(null)}
+                 >
+                    {dynamicAssetStatusData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={`url(#gradient-${index})`}
+                        stroke={activeIndex === index ? '#fff' : 'none'}
+                        strokeWidth={activeIndex === index ? 3 : 0}
+                        style={{
+                          filter: activeIndex === index ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' : 'none',
+                          transform: activeIndex === index ? 'scale(1.05)' : 'scale(1)',
+                          transformOrigin: 'center',
+                          transition: 'all 0.3s ease'
+                        }}
+                      />
+                    ))}
                  </Pie>
-                 <RechartsTooltip />
+                 <RechartsTooltip content={<CustomPieTooltip />} />
                </PieChart>
              </ResponsiveContainer>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-3 mt-2">
-            {dynamicAssetStatusData.map((entry, index) => (
-              <div key={index} className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
-                <span className="text-xs text-slate-600">{entry.name}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 border-t border-slate-100 pt-4">
-             <div className="flex justify-between items-center mb-3">
-                <span className="text-sm text-slate-500 font-medium">ทั้งหมด</span>
-                <span className="text-lg font-bold text-slate-800">{totalAssets}</span>
+             
+             {/* Center Text */}
+             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+               <div className="text-center">
+                 <div className="text-4xl font-bold text-slate-800">{totalAssets}</div>
+                 <div className="text-xs text-slate-500 mt-1">เครื่อง</div>
+               </div>
              </div>
-             <div className="grid grid-cols-2 gap-2 text-xs">
+          </div>
+
+          {/* Legend with Stats */}
+          <div className="mt-4 pt-4 border-t border-slate-200">
+             <div className="grid grid-cols-2 gap-3">
                 {dynamicAssetStatusData.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
-                       <div className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full" style={{backgroundColor: item.color}}></div>
-                          <span className="text-slate-600 truncate">{item.name}</span>
+                    <div 
+                      key={idx} 
+                      className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 hover:shadow-md transition-all cursor-pointer"
+                      onMouseEnter={() => setActiveIndex(idx)}
+                      onMouseLeave={() => setActiveIndex(null)}
+                    >
+                       <div className="flex items-center gap-2 min-w-0">
+                          <div 
+                            className="w-3 h-3 rounded-full flex-shrink-0" 
+                            style={{
+                              backgroundColor: item.color,
+                              boxShadow: activeIndex === idx ? `0 0 8px ${item.color}` : 'none'
+                            }}
+                          ></div>
+                          <span className="text-xs text-slate-600 truncate">{item.name}</span>
                        </div>
-                       <span className="font-bold text-slate-800">{item.value}</span>
+                       <div className="flex flex-col items-end">
+                         <span className="font-bold text-slate-800">{item.value}</span>
+                         <span className="text-[10px] text-slate-400">
+                           {((item.value / totalAssets) * 100).toFixed(0)}%
+                         </span>
+                       </div>
                     </div>
                 ))}
              </div>
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2 flex flex-col h-80 lg:h-96">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">มูลค่าทางบัญชี</h3>
-          <ResponsiveContainer width="100%" height={chartHeight}>
-            <BarChart data={depreciationData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" tick={{fontSize: 12}} axisLine={false} tickLine={false} />
-              <YAxis tickFormatter={(v: any) => `${v/1000}k`} axisLine={false} tickLine={false} />
-              <RechartsTooltip formatter={(v: any) => v ? `฿${v.toLocaleString()}` : '0'} />
-              <Bar dataKey="cost" name="ราคาทุน" fill="#94a3b8" radius={[4, 4, 4, 4]} barSize={20} />
-              <Bar dataKey="current" name="มูลค่าปัจจุบัน" fill="#3b82f6" radius={[4, 4, 4, 4]} barSize={20} />
+        {/* Bar Chart with Gradient */}
+        <div className="bg-gradient-to-br from-white to-indigo-50/30 p-6 rounded-2xl shadow-lg border border-slate-200 lg:col-span-2 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 mb-1">มูลค่าทางบัญชี</h3>
+              <p className="text-xs text-slate-500">เปรียบเทียบราคาทุนและมูลค่าปัจจุบัน</p>
+            </div>
+            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-indigo-600" />
+            </div>
+          </div>
+
+          {/* Summary Cards */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+              <div className="text-xs text-slate-500 mb-1">ราคาทุนรวม</div>
+              <div className="text-xl font-bold text-slate-700">
+                ฿{(depreciationData.reduce((sum, d) => sum + d.cost, 0) / 1000000).toFixed(1)}M
+              </div>
+            </div>
+            <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-sm">
+              <div className="text-xs text-blue-600 mb-1 flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                มูลค่าปัจจุบัน
+              </div>
+              <div className="text-xl font-bold text-blue-600">
+                ฿{(depreciationData.reduce((sum, d) => sum + d.current, 0) / 1000000).toFixed(1)}M
+              </div>
+            </div>
+            <div className="bg-white p-3 rounded-xl border border-red-100 shadow-sm">
+              <div className="text-xs text-red-600 mb-1 flex items-center gap-1">
+                <TrendingDown className="w-3 h-3" />
+                ค่าเสื่อม
+              </div>
+              <div className="text-xl font-bold text-red-600">
+                ฿{(depreciationData.reduce((sum, d) => sum + (d.cost - d.current), 0) / 1000000).toFixed(1)}M
+              </div>
+            </div>
+          </div>
+
+          <ResponsiveContainer width="100%" height={chartHeight - 80}>
+            <BarChart data={depreciationData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+              <defs>
+                <linearGradient id="costGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#cbd5e1" stopOpacity={0.8}/>
+                  <stop offset="100%" stopColor="#94a3b8" stopOpacity={1}/>
+                </linearGradient>
+                <linearGradient id="currentGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.8}/>
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={1}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <XAxis 
+                dataKey="name" 
+                tick={{fontSize: 11, fill: '#64748b'}} 
+                axisLine={false} 
+                tickLine={false}
+                angle={-15}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis 
+                tickFormatter={(v: any) => `${v/1000000}M`}
+                tick={{fontSize: 11, fill: '#64748b'}}
+                axisLine={false} 
+                tickLine={false}
+              />
+              <RechartsTooltip content={<CustomBarTooltip />} cursor={{fill: 'rgba(148, 163, 184, 0.1)'}} />
+              <Bar 
+                dataKey="cost" 
+                name="ราคาทุน" 
+                fill="url(#costGradient)" 
+                radius={[8, 8, 0, 0]} 
+                maxBarSize={35}
+              />
+              <Bar 
+                dataKey="current" 
+                name="มูลค่าปัจจุบัน" 
+                fill="url(#currentGradient)" 
+                radius={[8, 8, 0, 0]} 
+                maxBarSize={35}
+              />
             </BarChart>
           </ResponsiveContainer>
+
+          {/* Legend */}
+          <div className="flex items-center justify-center gap-6 mt-2">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-gradient-to-b from-slate-300 to-slate-500"></div>
+              <span className="text-xs text-slate-600">ราคาทุน</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-gradient-to-b from-blue-400 to-blue-600"></div>
+              <span className="text-xs text-slate-600">มูลค่าปัจจุบัน</span>
+            </div>
+          </div>
         </div>
       </div>
 
