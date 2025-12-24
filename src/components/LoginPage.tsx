@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { User, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Loader2, Activity, Stethoscope } from 'lucide-react';
 import ReCAPTCHA from 'react-google-recaptcha';
 
