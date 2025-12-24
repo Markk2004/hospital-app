@@ -278,7 +278,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onSuccess,
               </>
             )}
           </button>
-        </form>
+          </form>
         )}
 
         {/* Security Note */}
