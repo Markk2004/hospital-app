@@ -33,6 +33,8 @@ import { Toast } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { MobileLoginPage } from './components/MobileLoginPage';
 import { NewsSlider } from './components/NewsSlider';
+import { ResetPasswordPage } from './components/ResetPasswordPage';
+import { RegisterPage } from './components/RegisterPage';
 
 // Lazy Load Views for better performance
 const DashboardView = lazy(() => import('./views/DashboardView').then(m => ({ default: m.DashboardView })));
@@ -51,6 +53,8 @@ const UserManagementView = lazy(() => import('./views/UserManagementView').then(
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasSeenSlider, setHasSeenSlider] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -196,9 +200,33 @@ export default function App() {
   }, []);
 
   if (!isLoggedIn) {
+    if (showResetPassword) {
+      return <ResetPasswordPage 
+        onSuccess={() => {
+          setShowResetPassword(false);
+          triggerToast('ตั้งรหัสผ่านใหม่สำเร็จ! กรุณาเข้าสู่ระบบ', 'success');
+        }}
+        onBack={() => setShowResetPassword(false)}
+      />;
+    }
+    
+    if (showRegister) {
+      return <RegisterPage 
+        onSuccess={() => {
+          setShowRegister(false);
+          triggerToast('ลงทะเบียนสำเร็จ! กรุณาเข้าสู่ระบบ', 'success');
+        }}
+        onBack={() => setShowRegister(false)}
+      />;
+    }
+    
     return isMobile 
       ? <MobileLoginPage onLogin={() => setIsLoggedIn(true)} /> 
-      : <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+      : <LoginPage 
+          onLogin={() => setIsLoggedIn(true)} 
+          onForgotPassword={() => setShowResetPassword(true)}
+          onRegister={() => setShowRegister(true)}
+        />;
   }
 
   if (!hasSeenSlider) {

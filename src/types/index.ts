@@ -63,4 +63,6 @@ export interface PurchaseOrder {
   receivedDate?: string;
   supplier?: string;
   note?: string;
+  damagedQuantity?: number;
+  receiveNote?: string;
 }

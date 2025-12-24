@@ -55,9 +55,13 @@ export function InventoryView({ inventory: initialInventory, onUpdateInventory }
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showOrdersListModal, setShowOrdersListModal] = useState(false);
+  const [showReceiveConfirmModal, setShowReceiveConfirmModal] = useState(false);
+  const [selectedOrderForReceive, setSelectedOrderForReceive] = useState<PurchaseOrder | null>(null);
   const [selectedPartForOrder, setSelectedPartForOrder] = useState<Part | null>(null);
   const [orderQuantity, setOrderQuantity] = useState<number>(0);
   const [orderNote, setOrderNote] = useState('');
+  const [damagedQuantity, setDamagedQuantity] = useState<number>(0);
+  const [receiveNote, setReceiveNote] = useState('');
 
   // ฟังก์ชันจัดการอะไหล่
   const handleAddPart = () => {
@@ -146,6 +150,60 @@ export function InventoryView({ inventory: initialInventory, onUpdateInventory }
     setSelectedPartForOrder(null);
     setOrderQuantity(0);
     setOrderNote('');
+  };
+
+  const openReceiveConfirmModal = (order: PurchaseOrder) => {
+    setSelectedOrderForReceive(order);
+    setDamagedQuantity(0);
+    setReceiveNote('');
+    setShowReceiveConfirmModal(true);
+  };
+
+  const handleConfirmReceive = () => {
+    if (!selectedOrderForReceive) return;
+    
+    // คำนวณจำนวนที่ใช้ได้จริง (ยอดรับ - ของชำรุด)
+    const actualQuantity = selectedOrderForReceive.quantity - damagedQuantity;
+    
+    if (actualQuantity < 0) {
+      alert('จำนวนชำรุดมากกว่าจำนวนที่สั่ง กรุณาตรวจสอบอีกครั้ง');
+      return;
+    }
+    
+    // อัพเดทคำสั่งซื้อ
+    const orderId = selectedOrderForReceive.id;
+    const orderToUpdate = purchaseOrders.find(o => o.id === orderId);
+    
+    setPurchaseOrders(purchaseOrders.map(order => {
+      if (order.id === orderId) {
+        return { 
+          ...order, 
+          status: 'received' as const,
+          receivedDate: new Date().toISOString(),
+          damagedQuantity: damagedQuantity > 0 ? damagedQuantity : undefined,
+          receiveNote: receiveNote || undefined
+        };
+      }
+      return order;
+    }));
+    
+    // เพิ่มสต็อก (เฉพาะจำนวนที่ใช้ได้)
+    if (orderToUpdate && actualQuantity > 0) {
+      setInventory(prevInventory => {
+        const updatedInventory = prevInventory.map(part =>
+          part.id === orderToUpdate.partId
+            ? { ...part, stock: part.stock + actualQuantity }
+            : part
+        );
+        onUpdateInventory?.(updatedInventory);
+        return updatedInventory;
+      });
+    }
+    
+    setShowReceiveConfirmModal(false);
+    setSelectedOrderForReceive(null);
+    setDamagedQuantity(0);
+    setReceiveNote('');
   };
 
   const handleUpdateOrderStatus = (orderId: string, newStatus: PurchaseOrder['status']) => {
@@ -246,15 +304,23 @@ export function InventoryView({ inventory: initialInventory, onUpdateInventory }
   const alerts: InventoryAlert[] = useMemo(() => {
     return inventory
       .map(part => {
+        // ตรวจสอบว่ามี pending/ordered purchase order สำหรับ part นี้หรือไม่
+        const hasPendingOrder = purchaseOrders.some(
+          order => order.partId === part.id && 
+          (order.status === 'pending' || order.status === 'ordered')
+        );
+        
         let status: 'out_of_stock' | 'low_stock' | 'adequate' | 'overstocked';
         let severity: 'critical' | 'warning' | 'info';
 
         if (part.stock === 0) {
           status = 'out_of_stock';
-          severity = 'critical';
+          // ถ้ามี pending order อยู่แล้ว ไม่แสดงเป็น critical
+          severity = hasPendingOrder ? 'info' : 'critical';
         } else if (part.stock < part.min) {
           status = 'low_stock';
-          severity = 'warning';
+          // ถ้ามี pending order อยู่แล้ว ไม่แสดงเป็น warning
+          severity = hasPendingOrder ? 'info' : 'warning';
         } else if (part.stock >= part.min && part.stock < part.min * 2) {
           status = 'adequate';
           severity = 'info';
@@ -278,7 +344,7 @@ export function InventoryView({ inventory: initialInventory, onUpdateInventory }
         const severityOrder = { critical: 0, warning: 1, info: 2 };
         return severityOrder[a.severity] - severityOrder[b.severity];
       });
-  }, [inventory]);
+  }, [inventory, purchaseOrders]);
 
   // นับจำนวน alerts แต่ละประเภท
   const alertCounts = useMemo(() => {
@@ -1502,7 +1568,7 @@ export function InventoryView({ inventory: initialInventory, onUpdateInventory }
                             
                             {order.status === 'ordered' && (
                               <button
-                                onClick={() => handleUpdateOrderStatus(order.id, 'received')}
+                                onClick={() => openReceiveConfirmModal(order)}
                                 className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all text-sm flex items-center gap-2"
                               >
                                 <CheckCircle2 className="w-4 h-4" />
@@ -1533,6 +1599,202 @@ export function InventoryView({ inventory: initialInventory, onUpdateInventory }
                   className="w-full px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-xl font-semibold hover:from-slate-700 hover:to-slate-800 transition-all shadow-md"
                 >
                   ปิด
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Receive Confirmation Modal */}
+        {showReceiveConfirmModal && selectedOrderForReceive && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 rounded-t-2xl flex-shrink-0">
+                <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+                  <CheckCircle2 className="w-7 h-7" />
+                  ยืนยันการรับของ
+                </h3>
+              </div>
+              
+              <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 flex gap-3">
+                  <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-amber-900 mb-1">
+                      กรุณาตรวจสอบความถูกต้อง
+                    </div>
+                    <div className="text-sm text-amber-700">
+                      โปรดยืนยันว่าได้รับสินค้าตามรายการด้านล่างเรียบร้อยแล้ว
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+                  <div className="flex justify-between items-start pb-3 border-b border-slate-200">
+                    <div className="flex-1">
+                      <div className="text-xs text-slate-500 mb-1">รหัสคำสั่งซื้อ</div>
+                      <div className="font-bold text-slate-800">{selectedOrderForReceive.id}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-slate-500 mb-1">วันที่สั่งซื้อ</div>
+                      <div className="font-semibold text-slate-700 text-sm">
+                        {new Date(selectedOrderForReceive.orderedDate || selectedOrderForReceive.requestedDate).toLocaleDateString('th-TH', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">ชื่ออะไหล่</div>
+                    <div className="font-bold text-lg text-slate-800">{selectedOrderForReceive.partName}</div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3 pt-2">
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">จำนวน</div>
+                      <div className="font-bold text-green-600 text-lg">
+                        {selectedOrderForReceive.quantity}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">ราคา/หน่วย</div>
+                      <div className="font-semibold text-slate-700">
+                        ฿{selectedOrderForReceive.unitPrice.toLocaleString()}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">มูลค่ารวม</div>
+                      <div className="font-bold text-purple-600">
+                        ฿{selectedOrderForReceive.totalPrice.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedOrderForReceive.supplier && (
+                    <div className="pt-2 border-t border-slate-200">
+                      <div className="text-xs text-slate-500 mb-1">ผู้จัดจำหน่าย</div>
+                      <div className="font-semibold text-slate-700">{selectedOrderForReceive.supplier}</div>
+                    </div>
+                  )}
+
+                  {selectedOrderForReceive.note && (
+                    <div className="pt-2 border-t border-slate-200">
+                      <div className="text-xs text-slate-500 mb-1">หมายเหตุคำสั่งซื้อ</div>
+                      <div className="text-sm text-slate-700">{selectedOrderForReceive.note}</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ส่วนกรอกจำนวนชำรุด */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      จำนวนที่ชำรุด/เสียหาย (ถ้ามี)
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setDamagedQuantity(Math.max(0, damagedQuantity - 1))}
+                        className="w-12 h-12 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        disabled={damagedQuantity <= 0}
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        value={damagedQuantity}
+                        onChange={(e) => setDamagedQuantity(Math.max(0, Math.min(selectedOrderForReceive.quantity, Number(e.target.value))))}
+                        className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 text-center text-lg font-bold"
+                        placeholder="0"
+                        max={selectedOrderForReceive.quantity}
+                      />
+                      <button
+                        onClick={() => setDamagedQuantity(Math.min(selectedOrderForReceive.quantity, damagedQuantity + 1))}
+                        className="w-12 h-12 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        disabled={damagedQuantity >= selectedOrderForReceive.quantity}
+                      >
+                        +
+                      </button>
+                    </div>
+                    {damagedQuantity > 0 && (
+                      <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div className="text-xs text-red-600 font-semibold mb-1">⚠️ มีของชำรุด</div>
+                        <div className="text-sm text-red-700">
+                          จำนวนที่จะเพิ่มสต็อก: <span className="font-bold">{selectedOrderForReceive.quantity - damagedQuantity}</span> หน่วย
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      หมายเหตุการรับของ (ถ้ามี)
+                    </label>
+                    <textarea
+                      value={receiveNote}
+                      onChange={(e) => setReceiveNote(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      rows={2}
+                      placeholder="เช่น มีของชำรุด 2 ชิ้น, บรรจุภัณฑ์เสียหาย, ฯลฯ"
+                    />
+                  </div>
+                </div>
+
+                <div className={`border-2 rounded-xl p-4 ${damagedQuantity > 0 ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
+                  <div className="flex items-start gap-3">
+                    {damagedQuantity > 0 ? (
+                      <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    )}
+                    <div className={`flex-1 text-sm ${damagedQuantity > 0 ? 'text-amber-800' : 'text-green-800'}`}>
+                      <div className="font-semibold mb-2">สรุปการดำเนินการ:</div>
+                      <div className="space-y-1.5 bg-white/50 rounded-lg p-3">
+                        <div className="flex justify-between">
+                          <span>จำนวนที่สั่ง:</span>
+                          <span className="font-bold">{selectedOrderForReceive.quantity} หน่วย</span>
+                        </div>
+                        {damagedQuantity > 0 && (
+                          <div className="flex justify-between text-red-600">
+                            <span>จำนวนชำรุด:</span>
+                            <span className="font-bold">-{damagedQuantity} หน่วย</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between pt-2 border-t border-slate-300">
+                          <span className="font-semibold">เพิ่มสต็อก:</span>
+                          <span className="font-bold text-green-600 text-lg">
+                            +{selectedOrderForReceive.quantity - damagedQuantity} หน่วย
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs">
+                        • อัปเดตสถานะเป็น "ได้รับสินค้าแล้ว"<br/>
+                        • บันทึกวันที่รับของเป็นวันที่ปัจจุบัน
+                        {damagedQuantity > 0 && <><br/>• บันทึกจำนวนชำรุดไว้ในระบบ</>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 rounded-b-2xl flex gap-3 flex-shrink-0">
+                <button
+                  onClick={() => {
+                    setShowReceiveConfirmModal(false);
+                    setSelectedOrderForReceive(null);
+                  }}
+                  className="flex-1 px-4 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-100 transition-all"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleConfirmReceive}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-5 h-5" />
+                  ยืนยันรับของ
                 </button>
               </div>
             </div>
