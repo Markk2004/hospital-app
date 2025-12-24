@@ -104,6 +104,9 @@ export default function App() {
     <div 
       onClick={() => { 
         setActiveTab(id); 
+        setAssetMenuOpen(false);
+        setMaintenanceMenuOpen(false);
+        setReportMenuOpen(false);
         if(window.innerWidth < 768) setIsSidebarOpen(false); 
       }}
       title={!showLabels ? label : undefined}
@@ -162,6 +165,9 @@ export default function App() {
     <div 
       onClick={() => { 
         setActiveTab(id); 
+        setAssetMenuOpen(false);
+        setMaintenanceMenuOpen(false);
+        setReportMenuOpen(false);
         if(window.innerWidth < 768) setIsSidebarOpen(false); 
       }}
       title={!showLabels ? label : undefined}
