@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { 
   LayoutDashboard, 
   Stethoscope, 
@@ -18,7 +18,8 @@ import {
   ClipboardList,
   Users,
   FileBarChart,
-  PieChart
+  PieChart,
+  Loader2
 } from 'lucide-react';
 
 // Import Types
@@ -33,17 +34,27 @@ import { LoginPage } from './components/LoginPage';
 import { MobileLoginPage } from './components/MobileLoginPage';
 import { NewsSlider } from './components/NewsSlider';
 
-// Import Views
-import { DashboardView } from './views/DashboardView';
-import { MaintenanceView } from './views/MaintenanceView';
-import { InventoryView } from './views/InventoryView';
+// Lazy Load Views for better performance
+const DashboardView = lazy(() => import('./views/DashboardView').then(m => ({ default: m.DashboardView })));
+const MaintenanceView = lazy(() => import('./views/MaintenanceView').then(m => ({ default: m.MaintenanceView })));
+const InventoryView = lazy(() => import('./views/InventoryView').then(m => ({ default: m.InventoryView })));
+const AssetView = lazy(() => import('./views/AssetView').then(m => ({ default: m.AssetView })));
+const AssetRegisterView = lazy(() => import('./views/AssetRegisterView').then(m => ({ default: m.AssetRegisterView })));
+const AssetBorrowView = lazy(() => import('./views/AssetBorrowView').then(m => ({ default: m.AssetBorrowView })));
+const AssetDepreciationView = lazy(() => import('./views/AssetDepreciationView').then(m => ({ default: m.AssetDepreciationView })));
+const ReportsView = lazy(() => import('./views/ReportsView').then(m => ({ default: m.ReportsView })));
+const ReportSummaryView = lazy(() => import('./views/ReportSummaryView').then(m => ({ default: m.ReportSummaryView })));
+const ReportMaintenanceView = lazy(() => import('./views/ReportMaintenanceView').then(m => ({ default: m.ReportMaintenanceView })));
+const ReportPartsView = lazy(() => import('./views/ReportPartsView').then(m => ({ default: m.ReportPartsView })));
+const UserManagementView = lazy(() => import('./views/UserManagementView').then(m => ({ default: m.UserManagementView })));
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasSeenSlider, setHasSeenSlider] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [jobs, setJobs] = useState<Job[]>(initialJobs);
   const [partsInventory, setPartsInventory] = useState<Part[]>(initialPartsInventoryData);
   
@@ -87,20 +98,23 @@ export default function App() {
   };
 
   // Sidebar Menu Items
+  const showLabels = isSidebarOpen || isSidebarHovered;
+  
   const SidebarItem = ({ icon: Icon, label, id }: { icon: any; label: string; id: string }) => (
     <div 
       onClick={() => { 
         setActiveTab(id); 
         if(window.innerWidth < 768) setIsSidebarOpen(false); 
-      }} 
-      className={`flex items-center space-x-3 px-3 md:px-4 py-3.5 md:py-3 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden touch-manipulation ${
+      }}
+      title={!showLabels ? label : undefined}
+      className={`flex items-center space-x-3 px-3 md:px-4 py-3.5 md:py-3 rounded-lg cursor-pointer transition-all whitespace-nowrap overflow-hidden touch-manipulation group ${
         activeTab === id 
           ? 'bg-blue-50 text-blue-600 font-bold shadow-sm' 
           : 'text-slate-600 hover:bg-slate-50 active:bg-slate-100'
       }`}
     >
-      <Icon className={`w-5 h-5 md:w-5 md:h-5 flex-shrink-0 ${activeTab === id ? 'text-blue-600' : 'text-slate-400'}`} />
-      <span className="truncate text-base md:text-sm">{label}</span>
+      <Icon className={`w-5 h-5 md:w-5 md:h-5 flex-shrink-0 ${activeTab === id ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+      {showLabels && <span className="truncate text-base md:text-sm animate-in fade-in slide-in-from-left-2 duration-200">{label}</span>}
     </div>
   );
 
@@ -118,6 +132,7 @@ export default function App() {
   }) => (
     <div 
       onClick={onClick}
+      title={!showLabels ? label : undefined}
       className={`flex items-center justify-between px-3 md:px-4 py-3.5 md:py-3 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden touch-manipulation ${
         isOpen 
           ? 'bg-blue-50 text-blue-600 font-semibold' 
@@ -126,9 +141,9 @@ export default function App() {
     >
       <div className="flex items-center space-x-3">
         <Icon className={`w-5 h-5 md:w-5 md:h-5 flex-shrink-0 ${isOpen ? 'text-blue-600' : 'text-slate-400'}`} />
-        <span className="truncate text-base md:text-sm">{label}</span>
+        {showLabels && <span className="truncate text-base md:text-sm">{label}</span>}
       </div>
-      {isSidebarOpen && (
+      {showLabels && (
         isOpen ? <ChevronDown className="w-4 h-4 md:w-4 md:h-4" /> : <ChevronRight className="w-4 h-4 md:w-4 md:h-4" />
       )}
     </div>
@@ -149,14 +164,15 @@ export default function App() {
         setActiveTab(id); 
         if(window.innerWidth < 768) setIsSidebarOpen(false); 
       }}
-      className={`flex items-center space-x-3 pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-2.5 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden touch-manipulation ${
+      title={!showLabels ? label : undefined}
+      className={`flex items-center space-x-3 pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-2.5 rounded-lg cursor-pointer transition-all whitespace-nowrap overflow-hidden touch-manipulation group ${
         activeTab === id 
           ? 'bg-blue-100 text-blue-700 font-semibold' 
           : 'text-slate-600 hover:bg-slate-50 active:bg-slate-100'
       }`}
     >
-      <Icon className={`w-4 h-4 md:w-4 md:h-4 flex-shrink-0 ${activeTab === id ? 'text-blue-600' : 'text-slate-400'}`} />
-      <span className="truncate text-base md:text-sm">{label}</span>
+      <Icon className={`w-4 h-4 md:w-4 md:h-4 flex-shrink-0 ${activeTab === id ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+      {showLabels && <span className="truncate text-base md:text-sm animate-in fade-in slide-in-from-left-2 duration-200">{label}</span>}
     </div>
   );
 
@@ -165,8 +181,11 @@ export default function App() {
     const handleResize = () => {
         const mobile = window.innerWidth < 768;
         setIsMobile(mobile);
-        if (mobile) setIsSidebarOpen(false);
-        else setIsSidebarOpen(true);
+        if (mobile) {
+          setIsSidebarOpen(false);
+        } else {
+          setIsSidebarOpen(false); // Desktop starts collapsed
+        }
     };
     window.addEventListener('resize', handleResize);
     handleResize();
@@ -191,39 +210,59 @@ export default function App() {
       )}
 
       {/* Sidebar */}
-      <aside className={`${
-        isSidebarOpen 
-          ? 'w-72 md:w-64 translate-x-0' 
-          : 'w-0 -translate-x-full md:w-20 md:translate-x-0'
-      } fixed md:relative bg-white border-r border-slate-200 transition-all duration-300 flex flex-col z-30 h-full flex-shrink-0 shadow-lg shadow-slate-100 overscroll-contain`}>
+      <aside 
+        onMouseEnter={() => {
+          if (!isMobile) {
+            setIsSidebarHovered(true);
+          }
+        }}
+        onMouseLeave={() => {
+          if (!isMobile) {
+            setIsSidebarHovered(false);
+          }
+        }}
+        className={`${
+          isSidebarOpen && isMobile
+            ? 'w-72 translate-x-0' 
+            : isMobile
+            ? 'w-0 -translate-x-full'
+            : (showLabels ? 'w-64' : 'w-20')
+        } fixed md:relative bg-white border-r border-slate-200 transition-all duration-300 ease-in-out flex flex-col z-30 h-full flex-shrink-0 shadow-lg shadow-slate-100 overscroll-contain`}>
         <div className="p-4 md:p-6 flex items-center justify-between h-16 md:h-20 shrink-0">
-          {isSidebarOpen ? (
-            <div className="flex items-center space-x-2 text-blue-600 font-bold text-lg md:text-xl truncate animate-in fade-in">
-              <Activity className="w-7 h-7 md:w-8 md:h-8 flex-shrink-0" />
+          {/* Mobile: Full Logo */}
+          {isMobile && isSidebarOpen ? (
+            <div className="flex items-center space-x-2 text-blue-600 font-bold text-lg animate-in fade-in">
+              <Activity className="w-8 h-8 flex-shrink-0" />
               <span>Hospital Asset</span>
             </div>
-          ) : (
-            <Activity className="w-8 h-8 text-blue-600 mx-auto" />
+          ) : isMobile ? null : (
+            /* Desktop: Icon only, expand on hover */
+            showLabels ? (
+              <div className="flex items-center space-x-2 text-blue-600 font-bold text-xl truncate animate-in fade-in slide-in-from-left-3 duration-200">
+                <Activity className="w-8 h-8 flex-shrink-0" />
+                <span>Hospital Asset</span>
+              </div>
+            ) : (
+              <Activity className="w-8 h-8 text-blue-600 mx-auto" />
+            )
           )}
-          <button 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-            className="hidden md:block text-slate-400 hover:text-slate-600 transition-transform hover:scale-110 touch-manipulation"
-          >
-            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-          <button 
-            onClick={() => setIsSidebarOpen(false)} 
-            className="md:hidden text-slate-400 p-2 -mr-2 touch-manipulation active:bg-slate-100 rounded-lg"
-          >
-            <X size={22} />
-          </button>
+          
+          {/* Mobile close button */}
+          {isMobile && (
+            <button 
+              onClick={() => setIsSidebarOpen(false)} 
+              className="text-slate-400 p-2 -mr-2 touch-manipulation active:bg-slate-100 rounded-lg"
+            >
+              <X size={22} />
+            </button>
+          )}
         </div>
         
         <nav className="flex-1 px-3 md:px-4 space-y-1.5 md:space-y-2 mt-2 md:mt-4 overflow-y-auto overscroll-contain">
           {/* หน้าหลัก - Dashboard */}
           <SidebarItem 
             icon={LayoutDashboard} 
-            label={isSidebarOpen ? "หน้าหลัก" : ""} 
+            label="หน้าหลัก" 
             id="dashboard" 
           />
           
@@ -231,15 +270,16 @@ export default function App() {
           <div className="space-y-1">
             <DropdownParent 
               icon={Stethoscope} 
-              label={isSidebarOpen ? "ครุภัณฑ์" : ""} 
+              label="ครุภัณฑ์" 
               isOpen={assetMenuOpen}
               onClick={() => setAssetMenuOpen(!assetMenuOpen)}
             />
-            {assetMenuOpen && isSidebarOpen && (
+            {assetMenuOpen && showLabels && (
               <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
+                <DropdownChild icon={Package} label="รายการครุภัณฑ์" id="asset-list" />
                 <DropdownChild icon={FileText} label="ลงทะเบียน" id="asset-register" />
                 <DropdownChild icon={ArrowRightLeft} label="ระบบยืม-คืน" id="asset-borrow" />
-                <DropdownChild icon={TrendingDown} label="ค่าเสื่อมราคา" id="asset-depreciation" />
+                <DropdownChild icon={TrendingDown} label="ค่าเสื่อวราคา" id="asset-depreciation" />
               </div>
             )}
           </div>
@@ -248,11 +288,11 @@ export default function App() {
           <div className="space-y-1">
             <DropdownParent 
               icon={Wrench} 
-              label={isSidebarOpen ? "ซ่อมบำรุง" : ""} 
+              label="ซ่อมบำรุง" 
               isOpen={maintenanceMenuOpen}
               onClick={() => setMaintenanceMenuOpen(!maintenanceMenuOpen)}
             />
-            {maintenanceMenuOpen && isSidebarOpen && (
+            {maintenanceMenuOpen && showLabels && (
               <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
                 <DropdownChild icon={ClipboardList} label="รายการซ่อม" id="maintenance-list" />
                 <DropdownChild icon={Package} label="คลังอะไหล่" id="parts-inventory" />
@@ -264,11 +304,11 @@ export default function App() {
           <div className="space-y-1">
             <DropdownParent 
               icon={FileBarChart} 
-              label={isSidebarOpen ? "รายงาน" : ""} 
+              label="รายงาน" 
               isOpen={reportMenuOpen}
               onClick={() => setReportMenuOpen(!reportMenuOpen)}
             />
-            {reportMenuOpen && isSidebarOpen && (
+            {reportMenuOpen && showLabels && (
               <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
                 <DropdownChild icon={PieChart} label="สรุปภาพรวม" id="report-summary" />
                 <DropdownChild icon={FileBarChart} label="รายงานการซ่อม" id="report-maintenance" />
@@ -280,14 +320,14 @@ export default function App() {
           {/* ผู้ใช้งาน */}
           <SidebarItem 
             icon={Users} 
-            label={isSidebarOpen ? "ผู้ใช้งาน" : ""} 
-            id="users"
+            label="ผู้ใช้งาน" 
+            id="user-management"
           />
         </nav>
         
         <div className="p-4 border-t border-slate-100 shrink-0">
-           {isSidebarOpen ? (
-             <div className="flex items-center space-x-3 overflow-hidden bg-slate-50 p-3 rounded-xl border border-slate-100">
+           {showLabels ? (
+             <div className="flex items-center space-x-3 overflow-hidden bg-slate-50 p-3 rounded-xl border border-slate-100 animate-in fade-in slide-in-from-left-2 duration-200">
                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
                  <User className="w-5 h-5" />
                </div>
@@ -317,6 +357,7 @@ export default function App() {
              </button>
              <h1 className="text-base md:text-xl font-bold text-slate-800 truncate">
                {activeTab === 'dashboard' && 'หน้าหลัก'}
+               {activeTab === 'asset-list' && 'รายการครุภัณฑ์'}
                {activeTab === 'asset-register' && 'ลงทะเบียนครุภัณฑ์'}
                {activeTab === 'asset-borrow' && 'ระบบยืม-คืนครุภัณฑ์'}
                {activeTab === 'asset-depreciation' && 'ค่าเสื่อมราคา'}
@@ -326,7 +367,7 @@ export default function App() {
                {activeTab === 'report-summary' && 'สรุปภาพรวม'}
                {activeTab === 'report-maintenance' && 'รายงานการซ่อม'}
                {activeTab === 'report-parts' && 'รายงานอะไหล่'}
-               {activeTab === 'users' && 'ผู้ใช้งาน'}
+               {activeTab === 'user-management' && 'ผู้ใช้งานในระบบ'}
              </h1>
            </div>
            <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
@@ -359,65 +400,56 @@ export default function App() {
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden relative">
-          {activeTab === 'dashboard' && (
-            <DashboardView 
-              jobs={jobs} 
-              inventory={partsInventory} 
-              onNavigate={setActiveTab} 
-            />
-          )}
-          
-          {activeTab === 'maintenance-list' && (
-            <MaintenanceView 
-              jobs={jobs} 
-              inventory={partsInventory} 
-              onAddJob={handleAddJob} 
-              onUpdateJob={handleUpdateJob} 
-              onUsePart={handleUsePart} 
-              onShowToast={triggerToast} 
-            />
-          )}
-          
-          {activeTab === 'parts-inventory' && (
-            <InventoryView 
-              inventory={partsInventory} 
-              onUpdateInventory={handleUpdateInventory}
-            />
-          )}
-          
-          {/* Placeholder pages */}
-          {(activeTab === 'asset-register' || 
-            activeTab === 'asset-borrow' || 
-            activeTab === 'asset-depreciation' || 
-            activeTab === 'report-summary' ||
-            activeTab === 'report-maintenance' ||
-            activeTab === 'report-parts' ||
-            activeTab === 'users') && (
-            <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mb-4">
-                {activeTab === 'asset-register' && <FileText className="w-10 h-10 text-blue-600" />}
-                {activeTab === 'asset-borrow' && <ArrowRightLeft className="w-10 h-10 text-blue-600" />}
-                {activeTab === 'asset-depreciation' && <TrendingDown className="w-10 h-10 text-blue-600" />}
-                {activeTab === 'report-summary' && <PieChart className="w-10 h-10 text-blue-600" />}
-                {activeTab === 'report-maintenance' && <FileBarChart className="w-10 h-10 text-blue-600" />}
-                {activeTab === 'report-parts' && <Package className="w-10 h-10 text-blue-600" />}
-                {activeTab === 'users' && <Users className="w-10 h-10 text-blue-600" />}
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-full bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50">
+              <div className="text-center">
+                <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mx-auto mb-4" />
+                <p className="text-slate-600 font-medium">กำลังโหลด...</p>
               </div>
-              <h3 className="text-xl font-bold text-slate-700 mb-2">
-                {activeTab === 'asset-register' && 'ลงทะเบียนครุภัณฑ์'}
-                {activeTab === 'asset-borrow' && 'ระบบยืม-คืนครุภัณฑ์'}
-                {activeTab === 'asset-depreciation' && 'ค่าเสื่อมราคา'}
-                {activeTab === 'report-summary' && 'สรุปภาพรวม'}
-                {activeTab === 'report-maintenance' && 'รายงานการซ่อม'}
-                {activeTab === 'report-parts' && 'รายงานอะไหล่'}
-                {activeTab === 'users' && 'ผู้ใช้งาน'}
-              </h3>
-              <p className="text-slate-500 text-center max-w-md">
-                หน้านี้กำลังอยู่ในระหว่างการพัฒนา<br/>
-                จะเปิดให้ใช้งานในเร็วๆ นี้
-              </p>
             </div>
-          )}
+          }>
+            {activeTab === 'dashboard' && (
+              <DashboardView 
+                jobs={jobs} 
+                inventory={partsInventory} 
+                onNavigate={setActiveTab} 
+              />
+            )}
+            
+            {activeTab === 'maintenance-list' && (
+              <MaintenanceView 
+                jobs={jobs} 
+                inventory={partsInventory} 
+                onAddJob={handleAddJob} 
+                onUpdateJob={handleUpdateJob} 
+                onUsePart={handleUsePart} 
+                onShowToast={triggerToast} 
+              />
+            )}
+            
+            {activeTab === 'parts-inventory' && (
+              <InventoryView 
+                inventory={partsInventory} 
+                onUpdateInventory={handleUpdateInventory}
+              />
+            )}
+
+            {activeTab === 'asset-list' && <AssetView />}
+            
+            {activeTab === 'asset-register' && <AssetRegisterView />}
+            
+            {activeTab === 'asset-borrow' && <AssetBorrowView />}
+            
+            {activeTab === 'asset-depreciation' && <AssetDepreciationView />}
+            
+            {activeTab === 'report-summary' && <ReportSummaryView />}
+            {activeTab === 'report-maintenance' && <ReportMaintenanceView />}
+            {activeTab === 'report-parts' && <ReportPartsView />}
+            {activeTab === 'report-inventory' && <ReportsView />}
+            {activeTab === 'report-depreciation' && <ReportsView />}
+            
+            {activeTab === 'user-management' && <UserManagementView />}
+          </Suspense>
         </div>
         
         {/* Toast Notification */}

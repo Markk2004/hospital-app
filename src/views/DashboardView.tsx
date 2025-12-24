@@ -5,9 +5,9 @@ import {
   ChevronRight, ShoppingCart, TrendingUp, DollarSign
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
+  PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 import type { Job, Part } from '../types';
 import { StatCard } from '../components/StatCard';
@@ -103,23 +103,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
   const chartHeight = isMobile ? 240 : 300;
 
   return (
-    <div className="p-3 md:p-4 lg:p-8 space-y-4 md:space-y-6 lg:space-y-8 bg-slate-50/50 animate-in fade-in duration-300 h-full overflow-y-auto overscroll-contain">
+    <div className="p-3 md:p-4 lg:p-8 space-y-4 md:space-y-6 lg:space-y-8 bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50 h-full overflow-y-auto overscroll-contain">
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
-        <StatCard title="ครุภัณฑ์ทั้งหมด" value={totalAssets.toString()} subtext="มูลค่า 45.2 ลบ." icon={Stethoscope} colorClass="bg-blue-500 text-blue-500" />
-        <StatCard title="ถูกยืมใช้งาน" value={borrowed.toString()} subtext="+12% จากเดือนก่อน" icon={ArrowRightLeft} colorClass="bg-green-500 text-green-500" />
-        <StatCard title="งานซ่อมคงค้าง" value={inRepairCount} subtext="Real-time Update" icon={Wrench} colorClass="bg-orange-500 text-orange-500" />
+        <StatCard title="ครุภัณฑ์ทั้งหมด" value={totalAssets.toString()} subtext="มูลค่า 45.2 ลบ." icon={Stethoscope} colorClass="bg-blue-500 text-blue-500" index={0} />
+        <StatCard title="ถูกยืมใช้งาน" value={borrowed.toString()} subtext="+12% จากเดือนก่อน" icon={ArrowRightLeft} colorClass="bg-green-500 text-green-500" index={1} />
+        <StatCard title="งานซ่อมคงค้าง" value={inRepairCount} subtext="Real-time Update" icon={Wrench} colorClass="bg-orange-500 text-orange-500" index={2} />
         <StatCard 
           title="อะไหล่ใกล้หมด" 
           value={totalAlerts} 
           subtext={`หมดสต็อก ${outOfStockParts.length} | ต่ำ ${lowStockParts.length}`} 
           icon={AlertCircle} 
-          colorClass="bg-red-500 text-red-500" 
+          colorClass="bg-red-500 text-red-500"
+          index={3}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">{/* Pie Chart - Donut Style */}
-        <div className="bg-gradient-to-br from-white to-blue-50/30 p-4 md:p-6 rounded-2xl shadow-lg border border-slate-200 lg:col-span-1 flex flex-col">
-          <div className="flex items-center justify-between mb-3 md:mb-4">
+        <div className="glass-morphism glass-morphism-hover p-4 md:p-6 rounded-2xl lg:col-span-1 flex flex-col animate-scale-in animation-delay-400 overflow-hidden relative">
+          {/* Gradient Background with Dimension */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-cyan-50/30 to-transparent rounded-2xl"></div>
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-blue-100/20 to-cyan-100/20 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-0 right-0 w-32 h-32 bg-blue-400/5 rounded-full blur-xl"></div>
+          
+          <div className="flex items-center justify-between mb-3 md:mb-4 relative z-10">
             <div>
               <h3 className="text-base md:text-lg font-bold text-slate-800 mb-1">สถานะครุภัณฑ์</h3>
               <p className="text-xs text-slate-500">อัพเดทแบบ Real-time</p>
@@ -129,7 +136,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
             </div>
           </div>
           
-          <div className="flex-1 relative" style={{ minHeight: chartHeight }}>
+          <div className="flex-1 relative z-10" style={{ minHeight: chartHeight }}>
              <ResponsiveContainer width="100%" height={chartHeight}>
                <PieChart>
                  <defs>
@@ -181,7 +188,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
           </div>
 
           {/* Legend with Stats */}
-          <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-slate-200">
+          <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-slate-200 relative z-10">
              <div className="grid grid-cols-2 gap-2 md:gap-3">
                 {dynamicAssetStatusData.map((item, idx) => (
                     <div 
@@ -213,8 +220,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
         </div>
         
         {/* Bar Chart with Gradient */}
-        <div className="bg-gradient-to-br from-white to-indigo-50/30 p-4 md:p-6 rounded-2xl shadow-lg border border-slate-200 lg:col-span-2 flex flex-col">
-          <div className="flex items-center justify-between mb-3 md:mb-4">
+        <div className="glass-morphism glass-morphism-hover p-4 md:p-6 rounded-2xl lg:col-span-2 flex flex-col animate-scale-in animation-delay-400 overflow-hidden relative">
+          {/* Gradient Background with Dimension */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-transparent rounded-2xl"></div>
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 right-20 w-56 h-56 bg-gradient-to-tr from-indigo-100/20 to-purple-100/20 rounded-full blur-2xl"></div>
+          <div className="absolute top-1/2 right-0 w-40 h-40 bg-indigo-400/5 rounded-full blur-xl"></div>
+          
+          <div className="flex items-center justify-between mb-3 md:mb-4 relative z-10">
             <div>
               <h3 className="text-base md:text-lg font-bold text-slate-800 mb-1">มูลค่าทางบัญชี</h3>
               <p className="text-xs text-slate-500">เปรียบเทียบราคาทุนและมูลค่าปัจจุบัน</p>
@@ -225,7 +238,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4">
+          <div className="grid grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4 relative z-10">
             <div className="bg-white p-2 md:p-3 rounded-xl border border-slate-100 shadow-sm">
               <div className="text-[10px] md:text-xs text-slate-500 mb-0.5 md:mb-1">ราคาทุนรวม</div>
               <div className="text-base md:text-xl font-bold text-slate-700">
@@ -253,15 +266,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
           </div>
 
           <ResponsiveContainer width="100%" height={chartHeight - 80}>
-            <BarChart data={depreciationData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+            <LineChart data={depreciationData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
               <defs>
-                <linearGradient id="costGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#cbd5e1" stopOpacity={0.8}/>
-                  <stop offset="100%" stopColor="#94a3b8" stopOpacity={1}/>
+                <linearGradient id="costLineGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.8}/>
+                  <stop offset="90%" stopColor="#cbd5e1" stopOpacity={0.2}/>
                 </linearGradient>
-                <linearGradient id="currentGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.8}/>
-                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={1}/>
+                <linearGradient id="currentLineGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                  <stop offset="90%" stopColor="#60a5fa" stopOpacity={0.2}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -280,40 +293,52 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
                 axisLine={false} 
                 tickLine={false}
               />
-              <RechartsTooltip content={<CustomBarTooltip />} cursor={{fill: 'rgba(148, 163, 184, 0.1)'}} />
-              <Bar 
+              <RechartsTooltip content={<CustomBarTooltip />} cursor={{stroke: '#94a3b8', strokeWidth: 2, strokeDasharray: '5 5'}} />
+              <Line 
+                type="monotone"
                 dataKey="cost" 
                 name="ราคาทุน" 
-                fill="url(#costGradient)" 
-                radius={[8, 8, 0, 0]} 
-                maxBarSize={35}
+                stroke="#64748b"
+                strokeWidth={3}
+                dot={{ fill: '#64748b', strokeWidth: 2, r: 5 }}
+                activeDot={{ r: 8, fill: '#64748b', stroke: '#fff', strokeWidth: 2 }}
+                fill="url(#costLineGradient)"
               />
-              <Bar 
+              <Line 
+                type="monotone"
                 dataKey="current" 
                 name="มูลค่าปัจจุบัน" 
-                fill="url(#currentGradient)" 
-                radius={[8, 8, 0, 0]} 
-                maxBarSize={35}
+                stroke="#3b82f6"
+                strokeWidth={3}
+                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 5 }}
+                activeDot={{ r: 8, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+                fill="url(#currentLineGradient)"
               />
-            </BarChart>
+            </LineChart>
           </ResponsiveContainer>
 
           {/* Legend */}
           <div className="flex items-center justify-center gap-6 mt-2">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-gradient-to-b from-slate-300 to-slate-500"></div>
-              <span className="text-xs text-slate-600">ราคาทุน</span>
+              <div className="flex items-center gap-1">
+                <div className="w-6 h-0.5 rounded-full bg-slate-600"></div>
+                <div className="w-2 h-2 rounded-full bg-slate-600 border-2 border-white shadow"></div>
+              </div>
+              <span className="text-xs text-slate-600 font-medium">ราคาทุน</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-gradient-to-b from-blue-400 to-blue-600"></div>
-              <span className="text-xs text-slate-600">มูลค่าปัจจุบัน</span>
+              <div className="flex items-center gap-1">
+                <div className="w-6 h-0.5 rounded-full bg-blue-600"></div>
+                <div className="w-2 h-2 rounded-full bg-blue-600 border-2 border-white shadow"></div>
+              </div>
+              <span className="text-xs text-slate-600 font-medium">มูลค่าปัจจุบัน</span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 pb-4 md:pb-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
+        <div className="glass-morphism glass-morphism-hover rounded-2xl overflow-hidden flex flex-col h-full animate-slide-in-left animation-delay-200">
           <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center bg-blue-50/30">
             <h3 className="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
               <Wrench className="w-4 h-4 md:w-5 md:h-5 text-blue-600" /> 
@@ -351,7 +376,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
              {jobs.length === 0 && <p className="text-center text-slate-400 py-4 text-sm">ไม่มีงานซ่อมล่าสุด</p>}
           </div>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
+        <div className="glass-morphism glass-morphism-hover rounded-2xl overflow-hidden flex flex-col h-full animate-slide-in-left animation-delay-300">
            <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-red-50 to-orange-50">
              <div className="flex items-center gap-2">
                <div className="p-1.5 md:p-2 bg-red-100 rounded-lg">
