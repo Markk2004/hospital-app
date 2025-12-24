@@ -165,9 +165,6 @@ export default function App() {
     <div 
       onClick={() => { 
         setActiveTab(id); 
-        setAssetMenuOpen(false);
-        setMaintenanceMenuOpen(false);
-        setReportMenuOpen(false);
         if(window.innerWidth < 768) setIsSidebarOpen(false); 
       }}
       title={!showLabels ? label : undefined}
@@ -278,7 +275,11 @@ export default function App() {
               icon={Stethoscope} 
               label="ครุภัณฑ์" 
               isOpen={assetMenuOpen}
-              onClick={() => setAssetMenuOpen(!assetMenuOpen)}
+              onClick={() => {
+                setAssetMenuOpen(!assetMenuOpen);
+                setMaintenanceMenuOpen(false);
+                setReportMenuOpen(false);
+              }}
             />
             {assetMenuOpen && showLabels && (
               <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
@@ -296,7 +297,11 @@ export default function App() {
               icon={Wrench} 
               label="ซ่อมบำรุง" 
               isOpen={maintenanceMenuOpen}
-              onClick={() => setMaintenanceMenuOpen(!maintenanceMenuOpen)}
+              onClick={() => {
+                setMaintenanceMenuOpen(!maintenanceMenuOpen);
+                setAssetMenuOpen(false);
+                setReportMenuOpen(false);
+              }}
             />
             {maintenanceMenuOpen && showLabels && (
               <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
@@ -312,7 +317,11 @@ export default function App() {
               icon={FileBarChart} 
               label="รายงาน" 
               isOpen={reportMenuOpen}
-              onClick={() => setReportMenuOpen(!reportMenuOpen)}
+              onClick={() => {
+                setReportMenuOpen(!reportMenuOpen);
+                setAssetMenuOpen(false);
+                setMaintenanceMenuOpen(false);
+              }}
             />
             {reportMenuOpen && showLabels && (
               <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
