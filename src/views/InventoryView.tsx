@@ -3,9 +3,10 @@ import {
   Package, AlertTriangle, Search, TrendingUp, TrendingDown, 
   Plus, Edit2, Trash2, Download, Upload, Grid3x3, List,
   Filter, ArrowUpDown, ArrowUp, ArrowDown, X, Save,
-  BarChart3, ShoppingCart, FileText, Eye
+  BarChart3, ShoppingCart, FileText, Eye, ChevronLeft, ChevronRight,
+  CheckCircle2, Clock, XCircle, Truck, Calendar, User, DollarSign
 } from 'lucide-react';
-import type { Part, InventoryAlert } from '../types';
+import type { Part, InventoryAlert, PurchaseOrder } from '../types';
 import { StockStatusBadge } from '../components/StockStatusBadge';
 
 interface InventoryViewProps {
@@ -46,6 +47,16 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
     min: 0,
     unit: 'ชิ้น'
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  
+  // Purchase Order States
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showOrdersListModal, setShowOrdersListModal] = useState(false);
+  const [selectedPartForOrder, setSelectedPartForOrder] = useState<Part | null>(null);
+  const [orderQuantity, setOrderQuantity] = useState<number>(0);
+  const [orderNote, setOrderNote] = useState('');
 
   // ฟังก์ชันจัดการอะไหล่
   const handleAddPart = () => {
@@ -92,6 +103,78 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
     setSelectedPart(null);
     setStockAdjustment(0);
     setStockNote('');
+  };
+
+  // Purchase Order Functions
+  const openPurchaseModal = (part: Part) => {
+    setSelectedPartForOrder(part);
+    // แนะนำจำนวนที่ควรสั่งซื้อ (เติมให้ถึง min * 2)
+    const suggestedQty = Math.max(0, (part.min * 2) - part.stock);
+    setOrderQuantity(suggestedQty);
+    setOrderNote('');
+    setShowPurchaseModal(true);
+  };
+
+  const handleCreatePurchaseOrder = () => {
+    if (!selectedPartForOrder || orderQuantity <= 0) return;
+
+    const newOrder: PurchaseOrder = {
+      id: `PO-${Date.now()}`,
+      partId: selectedPartForOrder.id,
+      partName: selectedPartForOrder.name,
+      quantity: orderQuantity,
+      unitPrice: selectedPartForOrder.price,
+      totalPrice: orderQuantity * selectedPartForOrder.price,
+      status: 'pending',
+      requestedBy: 'Admin', // ในระบบจริงจะใช้ user ที่ login
+      requestedDate: new Date().toISOString(),
+      supplier: 'ผู้จัดจำหน่ายหลัก',
+      note: orderNote
+    };
+
+    setPurchaseOrders([newOrder, ...purchaseOrders]);
+    setShowPurchaseModal(false);
+    setSelectedPartForOrder(null);
+    setOrderQuantity(0);
+    setOrderNote('');
+  };
+
+  const handleUpdateOrderStatus = (orderId: string, newStatus: PurchaseOrder['status']) => {
+    // หา order ที่ต้องการอัพเดท
+    const orderToUpdate = purchaseOrders.find(o => o.id === orderId);
+    
+    // อัพเดท purchase orders
+    setPurchaseOrders(purchaseOrders.map(order => {
+      if (order.id === orderId) {
+        const updates: Partial<PurchaseOrder> = { status: newStatus };
+        
+        if (newStatus === 'ordered' && !order.orderedDate) {
+          updates.orderedDate = new Date().toISOString();
+        }
+        
+        if (newStatus === 'received') {
+          updates.receivedDate = new Date().toISOString();
+        }
+        
+        return { ...order, ...updates };
+      }
+      return order;
+    }));
+    
+    // เพิ่มสต็อกเมื่อได้รับของ (แยกออกมาเพื่อให้ state sync ดีขึ้น)
+    if (newStatus === 'received' && orderToUpdate) {
+      setInventory(prevInventory => prevInventory.map(part =>
+        part.id === orderToUpdate.partId
+          ? { ...part, stock: part.stock + orderToUpdate.quantity }
+          : part
+      ));
+    }
+  };
+
+  const handleDeleteOrder = (orderId: string) => {
+    if (confirm('คุณต้องการยกเลิกคำสั่งซื้อนี้หรือไม่?')) {
+      setPurchaseOrders(purchaseOrders.filter(order => order.id !== orderId));
+    }
   };
 
   const handleExport = () => {
@@ -193,6 +276,15 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
     };
   }, [alerts]);
 
+  // นับจำนวน purchase orders ตามสถานะ
+  const orderCounts = useMemo(() => {
+    return {
+      pending: purchaseOrders.filter(o => o.status === 'pending').length,
+      ordered: purchaseOrders.filter(o => o.status === 'ordered').length,
+      total: purchaseOrders.filter(o => o.status !== 'received' && o.status !== 'cancelled').length
+    };
+  }, [purchaseOrders]);
+
   // กรองและเรียงข้อมูล
   const filteredAndSortedInventory = useMemo(() => {
     let filtered = inventory.filter(part => {
@@ -215,7 +307,12 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
       
       switch (sortField) {
         case 'name':
-          compareValue = a.name.localeCompare(b.name, 'th');
+          // เรียงตามตัวเลขในรหัส ID (P001, P002, ... P010)
+          const extractNumber = (id: string) => {
+            const match = id.match(/\d+/);
+            return match ? parseInt(match[0], 10) : 0;
+          };
+          compareValue = extractNumber(a.id) - extractNumber(b.id);
           break;
         case 'stock':
           compareValue = a.stock - b.stock;
@@ -241,6 +338,33 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
 
     return filtered;
   }, [inventory, searchTerm, filterStatus, sortField, sortDirection]);
+
+  // คำนวณ pagination
+  const totalPages = Math.ceil(filteredAndSortedInventory.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = filteredAndSortedInventory.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, sortField, sortDirection]);
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="h-full overflow-y-auto p-4 md:p-8 bg-gradient-to-br from-slate-50 to-blue-50">
@@ -278,6 +402,16 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
               </div>
               <div className="text-2xl font-bold text-red-700">{alertCounts.critical}</div>
             </div>
+            <button
+              onClick={() => setShowOrdersListModal(true)}
+              className="flex-1 min-w-[180px] bg-gradient-to-br from-purple-50 to-purple-100 px-4 py-3 rounded-xl border-2 border-purple-300 shadow-md hover:shadow-lg transition-all hover:scale-105 cursor-pointer"
+            >
+              <div className="text-xs text-purple-700 mb-1 flex items-center gap-1 font-semibold whitespace-nowrap">
+                <ShoppingCart className="w-3 h-3" />
+                คำสั่งซื้อรอดำเนินการ
+              </div>
+              <div className="text-2xl font-bold text-purple-700">{orderCounts.total}</div>
+            </button>
           </div>
         </div>
 
@@ -297,17 +431,17 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
                     .map(alert => (
                       <div 
                         key={alert.id}
-                        className={`flex items-center justify-between p-3 rounded-lg ${
+                        className={`flex items-center justify-between p-3 rounded-lg gap-3 ${
                           alert.severity === 'critical' 
                             ? 'bg-red-100 border border-red-200' 
                             : 'bg-orange-100 border border-orange-200'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className="text-2xl flex-shrink-0">
                             {alert.severity === 'critical' ? '🚫' : '⚠️'}
                           </span>
-                          <div>
+                          <div className="flex-1">
                             <div className="font-semibold text-slate-800">
                               {alert.partName}
                             </div>
@@ -316,15 +450,27 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className={`text-lg font-bold ${
-                            alert.severity === 'critical' ? 'text-red-700' : 'text-orange-700'
-                          }`}>
-                            {alert.currentStock === 0 ? 'หมดสต็อก' : `เหลือ ${alert.currentStock}`}
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="text-right">
+                            <div className={`text-lg font-bold whitespace-nowrap ${
+                              alert.severity === 'critical' ? 'text-red-700' : 'text-orange-700'
+                            }`}>
+                              {alert.currentStock === 0 ? 'หมดสต็อก' : `เหลือ ${alert.currentStock}`}
+                            </div>
+                            <div className="text-xs text-slate-600 whitespace-nowrap">
+                              ต้องการขั้นต่ำ {alert.minStock}
+                            </div>
                           </div>
-                          <div className="text-xs text-slate-600">
-                            ต้องการขั้นต่ำ {alert.minStock}
-                          </div>
+                          <button
+                            onClick={() => {
+                              const part = inventory.find(p => p.id === alert.partId);
+                              if (part) openPurchaseModal(part);
+                            }}
+                            className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all shadow-md text-sm flex items-center gap-2 whitespace-nowrap"
+                          >
+                            <ShoppingCart className="w-4 h-4" />
+                            สั่งซื้อด่วน
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -455,7 +601,7 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
                         onClick={() => handleSort('name')}
                         className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider hover:text-blue-600 transition-colors"
                       >
-                        ชื่ออะไหล่
+                        รหัส / ชื่ออะไหล่
                         {sortField === 'name' && (
                           sortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
                         )}
@@ -509,7 +655,7 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
                       </td>
                     </tr>
                   ) : (
-                    filteredAndSortedInventory.map((part, idx) => (
+                    currentItems.map((part, idx) => (
                       <tr 
                         key={part.id} 
                         className="hover:bg-blue-50 transition-colors group"
@@ -557,8 +703,15 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-2">
                             <button
-                              onClick={() => openStockModal(part)}
+                              onClick={() => openPurchaseModal(part)}
                               className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-all"
+                              title="สั่งซื้ออะไหล่"
+                            >
+                              <ShoppingCart className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => openStockModal(part)}
+                              className="p-2 bg-cyan-100 text-cyan-600 rounded-lg hover:bg-cyan-200 transition-all"
                               title="ปรับสต็อก"
                             >
                               <Upload className="w-4 h-4" />
@@ -595,7 +748,7 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
                 <div className="text-sm mt-1">ลองค้นหาด้วยคำอื่นหรือเพิ่มอะไหล่ใหม่</div>
               </div>
             ) : (
-              filteredAndSortedInventory.map((part) => (
+              currentItems.map((part) => (
                 <div
                   key={part.id}
                   className="bg-white rounded-xl p-5 shadow-md hover:shadow-xl transition-all border-2 border-slate-200 hover:border-blue-300 group"
@@ -606,8 +759,15 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
                     </div>
                     <div className="flex gap-1">
                       <button
-                        onClick={() => openStockModal(part)}
+                        onClick={() => openPurchaseModal(part)}
                         className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-all opacity-0 group-hover:opacity-100"
+                        title="สั่งซื้อ"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => openStockModal(part)}
+                        className="p-1.5 bg-cyan-100 text-cyan-600 rounded-lg hover:bg-cyan-200 transition-all opacity-0 group-hover:opacity-100"
                         title="ปรับสต็อก"
                       >
                         <Upload className="w-4 h-4" />
@@ -663,6 +823,77 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filteredAndSortedInventory.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-5">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-slate-600">
+                แสดง <span className="font-bold text-slate-800">{startIndex + 1}</span> ถึง{' '}
+                <span className="font-bold text-slate-800">
+                  {Math.min(endIndex, filteredAndSortedInventory.length)}
+                </span>{' '}
+                จาก <span className="font-bold text-slate-800">{filteredAndSortedInventory.length}</span> รายการ
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 hover:border-blue-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  <span className="hidden sm:inline">ย้อนกลับ</span>
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // Show first page, last page, current page, and pages around current
+                    const showPage =
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1);
+
+                    if (!showPage) {
+                      // Show ellipsis
+                      if (page === currentPage - 2 || page === currentPage + 2) {
+                        return (
+                          <span key={page} className="px-2 text-slate-400">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    }
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page)}
+                        className={`min-w-[40px] h-10 px-3 rounded-xl font-bold transition-all ${
+                          currentPage === page
+                            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg scale-110'
+                            : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 hover:shadow-md'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 hover:border-blue-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                >
+                  <span className="hidden sm:inline">ถัดไป</span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -972,6 +1203,323 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   บันทึกการปรับสต็อก
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Purchase Order Modal */}
+        {showPurchaseModal && selectedPartForOrder && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+              <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 rounded-t-2xl">
+                <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+                  <ShoppingCart className="w-7 h-7" />
+                  สั่งซื้ออะไหล่
+                </h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="bg-slate-50 p-4 rounded-xl">
+                  <div className="text-sm text-slate-600 mb-1">อะไหล่ที่ต้องการสั่งซื้อ</div>
+                  <div className="font-bold text-lg text-slate-800">{selectedPartForOrder.name}</div>
+                  <div className="text-sm text-slate-500 mt-1">รหัส: {selectedPartForOrder.id}</div>
+                  <div className="mt-3 pt-3 border-t border-slate-200 grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-xs text-slate-600">สต็อกปัจจุบัน</div>
+                      <div className="font-bold text-blue-600">
+                        {selectedPartForOrder.stock} {selectedPartForOrder.unit}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-600">ราคา/หน่วย</div>
+                      <div className="font-bold text-slate-800">
+                        ฿{selectedPartForOrder.price.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    จำนวนที่ต้องการสั่งซื้อ
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setOrderQuantity(Math.max(0, orderQuantity - 10))}
+                      className="w-12 h-12 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-all"
+                    >
+                      −10
+                    </button>
+                    <button
+                      onClick={() => setOrderQuantity(Math.max(0, orderQuantity - 1))}
+                      className="w-12 h-12 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-all"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      value={orderQuantity}
+                      onChange={(e) => setOrderQuantity(Math.max(0, Number(e.target.value)))}
+                      className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 text-center text-lg font-bold"
+                      placeholder="0"
+                    />
+                    <button
+                      onClick={() => setOrderQuantity(orderQuantity + 1)}
+                      className="w-12 h-12 bg-green-100 text-green-600 rounded-xl font-bold hover:bg-green-200 transition-all"
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => setOrderQuantity(orderQuantity + 10)}
+                      className="w-12 h-12 bg-green-100 text-green-600 rounded-xl font-bold hover:bg-green-200 transition-all"
+                    >
+                      +10
+                    </button>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-2">
+                    💡 แนะนำ: สั่ง {Math.max(0, (selectedPartForOrder.min * 2) - selectedPartForOrder.stock)} {selectedPartForOrder.unit} เพื่อเติมให้ถึง {selectedPartForOrder.min * 2}
+                  </div>
+                </div>
+
+                <div className="bg-green-50 p-4 rounded-xl border-2 border-green-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-semibold text-slate-700">มูลค่ารวม:</span>
+                    <span className="font-bold text-2xl text-green-600">
+                      ฿{(orderQuantity * selectedPartForOrder.price).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-600">
+                    {orderQuantity} {selectedPartForOrder.unit} × ฿{selectedPartForOrder.price.toLocaleString()}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">หมายเหตุ (ถ้ามี)</label>
+                  <textarea
+                    value={orderNote}
+                    onChange={(e) => setOrderNote(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    rows={3}
+                    placeholder="เช่น ต้องการด่วน, สำหรับงานซ่อม, ฯลฯ"
+                  />
+                </div>
+              </div>
+              <div className="p-6 bg-slate-50 rounded-b-2xl flex gap-3">
+                <button
+                  onClick={() => { 
+                    setShowPurchaseModal(false); 
+                    setSelectedPartForOrder(null); 
+                    setOrderQuantity(0);
+                    setOrderNote('');
+                  }}
+                  className="flex-1 px-4 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-100 transition-all"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleCreatePurchaseOrder}
+                  disabled={orderQuantity <= 0}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  สร้างคำสั่งซื้อ
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Purchase Orders List Modal */}
+        {showOrdersListModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-6 rounded-t-2xl">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+                    <FileText className="w-7 h-7" />
+                    รายการคำสั่งซื้ออะไหล่
+                  </h3>
+                  <button
+                    onClick={() => setShowOrdersListModal(false)}
+                    className="text-white hover:bg-white/20 rounded-lg p-2 transition-all"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <div className="mt-4 flex gap-3">
+                  <div className="bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                    <div className="text-xs text-purple-100">รอดำเนินการ</div>
+                    <div className="text-lg font-bold text-white">{orderCounts.pending}</div>
+                  </div>
+                  <div className="bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                    <div className="text-xs text-purple-100">สั่งซื้อแล้ว</div>
+                    <div className="text-lg font-bold text-white">{orderCounts.ordered}</div>
+                  </div>
+                  <div className="bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                    <div className="text-xs text-purple-100">ทั้งหมด</div>
+                    <div className="text-lg font-bold text-white">{purchaseOrders.length}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-6">
+                {purchaseOrders.length === 0 ? (
+                  <div className="text-center py-16">
+                    <ShoppingCart className="w-20 h-20 mx-auto mb-4 text-slate-300" />
+                    <div className="text-xl font-semibold text-slate-600 mb-2">ยังไม่มีคำสั่งซื้อ</div>
+                    <div className="text-sm text-slate-500">เริ่มสั่งซื้ออะไหล่จากหน้าคลังอะไหล่</div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {purchaseOrders.map((order) => {
+                      const statusConfig = {
+                        pending: { 
+                          bg: 'bg-yellow-100 border-yellow-300', 
+                          text: 'text-yellow-700',
+                          icon: Clock,
+                          label: 'รอดำเนินการ'
+                        },
+                        ordered: { 
+                          bg: 'bg-blue-100 border-blue-300', 
+                          text: 'text-blue-700',
+                          icon: Truck,
+                          label: 'สั่งซื้อแล้ว'
+                        },
+                        received: { 
+                          bg: 'bg-green-100 border-green-300', 
+                          text: 'text-green-700',
+                          icon: CheckCircle2,
+                          label: 'ได้รับแล้ว'
+                        },
+                        cancelled: { 
+                          bg: 'bg-red-100 border-red-300', 
+                          text: 'text-red-700',
+                          icon: XCircle,
+                          label: 'ยกเลิก'
+                        }
+                      };
+                      
+                      const config = statusConfig[order.status];
+                      const StatusIcon = config.icon;
+                      
+                      return (
+                        <div key={order.id} className={`${config.bg} border-2 rounded-xl p-5 hover:shadow-lg transition-all`}>
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className={`px-3 py-1.5 ${config.bg} border-2 ${config.bg.replace('100', '300')} rounded-lg flex items-center gap-2`}>
+                                  <StatusIcon className={`w-4 h-4 ${config.text}`} />
+                                  <span className={`text-sm font-bold ${config.text}`}>{config.label}</span>
+                                </div>
+                                <span className="text-xs text-slate-500 font-mono">{order.id}</span>
+                              </div>
+                              <div className="font-bold text-lg text-slate-800">{order.partName}</div>
+                              <div className="text-sm text-slate-600 mt-1">รหัส: {order.partId}</div>
+                            </div>
+                            
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-purple-600">
+                                ฿{order.totalPrice.toLocaleString()}
+                              </div>
+                              <div className="text-xs text-slate-500 mt-1">
+                                {order.quantity} × ฿{order.unitPrice.toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
+                            <div>
+                              <div className="text-xs text-slate-500 flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                ผู้ขอ
+                              </div>
+                              <div className="font-semibold text-slate-700">{order.requestedBy}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-slate-500 flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                วันที่ขอ
+                              </div>
+                              <div className="font-semibold text-slate-700">
+                                {new Date(order.requestedDate).toLocaleDateString('th-TH', { 
+                                  day: 'numeric', 
+                                  month: 'short',
+                                  year: '2-digit'
+                                })}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-slate-500 flex items-center gap-1">
+                                <Truck className="w-3 h-3" />
+                                ผู้จัดจำหน่าย
+                              </div>
+                              <div className="font-semibold text-slate-700">{order.supplier || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-slate-500">จำนวน</div>
+                              <div className="font-bold text-purple-600">{order.quantity}</div>
+                            </div>
+                          </div>
+                          
+                          {order.note && (
+                            <div className="bg-white/50 rounded-lg p-3 mb-4">
+                              <div className="text-xs text-slate-500 mb-1">หมายเหตุ:</div>
+                              <div className="text-sm text-slate-700">{order.note}</div>
+                            </div>
+                          )}
+                          
+                          <div className="flex gap-2 flex-wrap">
+                            {order.status === 'pending' && (
+                              <>
+                                <button
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'ordered')}
+                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all text-sm flex items-center gap-2"
+                                >
+                                  <Truck className="w-4 h-4" />
+                                  ยืนยันสั่งซื้อ
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'cancelled')}
+                                  className="px-4 py-2 bg-red-100 text-red-700 border-2 border-red-300 rounded-lg font-semibold hover:bg-red-200 transition-all text-sm"
+                                >
+                                  ยกเลิก
+                                </button>
+                              </>
+                            )}
+                            
+                            {order.status === 'ordered' && (
+                              <button
+                                onClick={() => handleUpdateOrderStatus(order.id, 'received')}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all text-sm flex items-center gap-2"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                                ยืนยันรับของ
+                              </button>
+                            )}
+                            
+                            {(order.status === 'cancelled' || order.status === 'received') && (
+                              <button
+                                onClick={() => handleDeleteOrder(order.id)}
+                                className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-semibold hover:bg-slate-200 transition-all text-sm"
+                              >
+                                <Trash2 className="w-4 h-4 inline mr-1" />
+                                ลบรายการ
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-6 bg-slate-50 rounded-b-2xl border-t border-slate-200">
+                <button
+                  onClick={() => setShowOrdersListModal(false)}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-xl font-semibold hover:from-slate-700 hover:to-slate-800 transition-all shadow-md"
+                >
+                  ปิด
                 </button>
               </div>
             </div>

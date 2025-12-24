@@ -103,8 +103,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
   const chartHeight = isMobile ? 240 : 300;
 
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-slate-50/50 animate-in fade-in duration-300 h-full overflow-y-auto">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="p-3 md:p-4 lg:p-8 space-y-4 md:space-y-6 lg:space-y-8 bg-slate-50/50 animate-in fade-in duration-300 h-full overflow-y-auto overscroll-contain">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
         <StatCard title="ครุภัณฑ์ทั้งหมด" value={totalAssets.toString()} subtext="มูลค่า 45.2 ลบ." icon={Stethoscope} colorClass="bg-blue-500 text-blue-500" />
         <StatCard title="ถูกยืมใช้งาน" value={borrowed.toString()} subtext="+12% จากเดือนก่อน" icon={ArrowRightLeft} colorClass="bg-green-500 text-green-500" />
         <StatCard title="งานซ่อมคงค้าง" value={inRepairCount} subtext="Real-time Update" icon={Wrench} colorClass="bg-orange-500 text-orange-500" />
@@ -117,16 +117,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pie Chart - Donut Style */}
-        <div className="bg-gradient-to-br from-white to-blue-50/30 p-6 rounded-2xl shadow-lg border border-slate-200 lg:col-span-1 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">{/* Pie Chart - Donut Style */}
+        <div className="bg-gradient-to-br from-white to-blue-50/30 p-4 md:p-6 rounded-2xl shadow-lg border border-slate-200 lg:col-span-1 flex flex-col">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <div>
-              <h3 className="text-lg font-bold text-slate-800 mb-1">สถานะครุภัณฑ์</h3>
+              <h3 className="text-base md:text-lg font-bold text-slate-800 mb-1">สถานะครุภัณฑ์</h3>
               <p className="text-xs text-slate-500">อัพเดทแบบ Real-time</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Activity className="w-6 h-6 text-blue-600" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <Activity className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
             </div>
           </div>
           
@@ -182,28 +181,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
           </div>
 
           {/* Legend with Stats */}
-          <div className="mt-4 pt-4 border-t border-slate-200">
-             <div className="grid grid-cols-2 gap-3">
+          <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-slate-200">
+             <div className="grid grid-cols-2 gap-2 md:gap-3">
                 {dynamicAssetStatusData.map((item, idx) => (
                     <div 
                       key={idx} 
-                      className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 hover:shadow-md transition-all cursor-pointer"
+                      className="flex items-center justify-between p-2 md:p-3 rounded-xl bg-white border border-slate-100 hover:shadow-md transition-all cursor-pointer touch-manipulation active:scale-95"
                       onMouseEnter={() => setActiveIndex(idx)}
                       onMouseLeave={() => setActiveIndex(null)}
                     >
-                       <div className="flex items-center gap-2 min-w-0">
+                       <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
                           <div 
-                            className="w-3 h-3 rounded-full flex-shrink-0" 
+                            className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0" 
                             style={{
                               backgroundColor: item.color,
                               boxShadow: activeIndex === idx ? `0 0 8px ${item.color}` : 'none'
                             }}
                           ></div>
-                          <span className="text-xs text-slate-600 truncate">{item.name}</span>
+                          <span className="text-[11px] md:text-xs text-slate-600 truncate">{item.name}</span>
                        </div>
                        <div className="flex flex-col items-end">
-                         <span className="font-bold text-slate-800">{item.value}</span>
-                         <span className="text-[10px] text-slate-400">
+                         <span className="text-sm md:text-base font-bold text-slate-800">{item.value}</span>
+                         <span className="text-[9px] md:text-[10px] text-slate-400">
                            {((item.value / totalAssets) * 100).toFixed(0)}%
                          </span>
                        </div>
@@ -214,40 +213,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
         </div>
         
         {/* Bar Chart with Gradient */}
-        <div className="bg-gradient-to-br from-white to-indigo-50/30 p-6 rounded-2xl shadow-lg border border-slate-200 lg:col-span-2 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-gradient-to-br from-white to-indigo-50/30 p-4 md:p-6 rounded-2xl shadow-lg border border-slate-200 lg:col-span-2 flex flex-col">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <div>
-              <h3 className="text-lg font-bold text-slate-800 mb-1">มูลค่าทางบัญชี</h3>
+              <h3 className="text-base md:text-lg font-bold text-slate-800 mb-1">มูลค่าทางบัญชี</h3>
               <p className="text-xs text-slate-500">เปรียบเทียบราคาทุนและมูลค่าปัจจุบัน</p>
             </div>
-            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-indigo-600" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+              <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-indigo-600" />
             </div>
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">ราคาทุนรวม</div>
-              <div className="text-xl font-bold text-slate-700">
+          <div className="grid grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4">
+            <div className="bg-white p-2 md:p-3 rounded-xl border border-slate-100 shadow-sm">
+              <div className="text-[10px] md:text-xs text-slate-500 mb-0.5 md:mb-1">ราคาทุนรวม</div>
+              <div className="text-base md:text-xl font-bold text-slate-700">
                 ฿{(depreciationData.reduce((sum, d) => sum + d.cost, 0) / 1000000).toFixed(1)}M
               </div>
             </div>
-            <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-sm">
-              <div className="text-xs text-blue-600 mb-1 flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />
-                มูลค่าปัจจุบัน
+            <div className="bg-white p-2 md:p-3 rounded-xl border border-blue-100 shadow-sm">
+              <div className="text-[10px] md:text-xs text-blue-600 mb-0.5 md:mb-1 flex items-center gap-0.5 md:gap-1">
+                <TrendingUp className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                <span className="truncate">มูลค่าปัจจุบัน</span>
               </div>
-              <div className="text-xl font-bold text-blue-600">
+              <div className="text-base md:text-xl font-bold text-blue-600">
                 ฿{(depreciationData.reduce((sum, d) => sum + d.current, 0) / 1000000).toFixed(1)}M
               </div>
             </div>
-            <div className="bg-white p-3 rounded-xl border border-red-100 shadow-sm">
-              <div className="text-xs text-red-600 mb-1 flex items-center gap-1">
-                <TrendingDown className="w-3 h-3" />
-                ค่าเสื่อม
+            <div className="bg-white p-2 md:p-3 rounded-xl border border-red-100 shadow-sm">
+              <div className="text-[10px] md:text-xs text-red-600 mb-0.5 md:mb-1 flex items-center gap-0.5 md:gap-1">
+                <TrendingDown className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                <span className="truncate">ค่าเสื่อม</span>
               </div>
-              <div className="text-xl font-bold text-red-600">
+              <div className="text-base md:text-xl font-bold text-red-600">
                 ฿{(depreciationData.reduce((sum, d) => sum + (d.cost - d.current), 0) / 1000000).toFixed(1)}M
               </div>
             </div>
@@ -313,87 +312,91 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ jobs, inventory, o
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 pb-4 md:pb-6">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-blue-50/30">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-blue-600" /> งานซ่อมล่าสุด
+          <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center bg-blue-50/30">
+            <h3 className="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Wrench className="w-4 h-4 md:w-5 md:h-5 text-blue-600" /> 
+              <span>งานซ่อมล่าสุด</span>
             </h3>
-            <button onClick={() => onNavigate('maintenance-list')} className="text-xs text-blue-600 hover:underline">
+            <button 
+              onClick={() => onNavigate('maintenance-list')} 
+              className="text-xs text-blue-600 hover:underline touch-manipulation active:scale-95 px-2 py-1"
+            >
               ดูทั้งหมด
             </button>
           </div>
-          <div className="p-4 space-y-3">
+          <div className="p-3 md:p-4 space-y-2 md:space-y-3 overflow-y-auto">
              {jobs.slice(0, 4).map((job) => (
-               <div key={job.id} className="p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-all group">
-                  <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{job.id}</span>
-                          <span className="text-[10px] text-slate-400 flex items-center gap-1"><Clock size={10}/> {job.date}</span>
+               <div key={job.id} className="p-2.5 md:p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-all group touch-manipulation active:scale-98">
+                  <div className="flex justify-between items-start mb-1.5 md:mb-2">
+                      <div className="flex items-center gap-1.5 md:gap-2">
+                          <span className="text-[9px] md:text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{job.id}</span>
+                          <span className="text-[9px] md:text-[10px] text-slate-400 flex items-center gap-0.5 md:gap-1"><Clock size={9} className="md:w-2.5 md:h-2.5"/> {job.date}</span>
                       </div>
                       <StatusBadge status={job.status} />
                   </div>
-                  <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${job.urgency === 'high' ? 'bg-red-100 text-red-500' : 'bg-slate-100 text-slate-500'}`}>
-                          <Activity className="w-4 h-4" />
+                  <div className="flex items-start gap-2 md:gap-3">
+                      <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shrink-0 ${job.urgency === 'high' ? 'bg-red-100 text-red-500' : 'bg-slate-100 text-slate-500'}`}>
+                          <Activity className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-slate-700 text-sm truncate">{job.assetName}</h4>
-                          <p className="text-xs text-slate-500 truncate"><span className="font-semibold text-slate-600">อาการ:</span> {job.issue}</p>
-                          <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1"><User size={10}/> แจ้งโดย: {job.reporter}</p>
+                          <h4 className="font-bold text-slate-700 text-xs md:text-sm truncate">{job.assetName}</h4>
+                          <p className="text-[11px] md:text-xs text-slate-500 truncate"><span className="font-semibold text-slate-600">อาการ:</span> {job.issue}</p>
+                          <p className="text-[9px] md:text-[10px] text-slate-400 mt-0.5 md:mt-1 flex items-center gap-0.5 md:gap-1"><User size={9} className="md:w-2.5 md:h-2.5"/> แจ้งโดย: {job.reporter}</p>
                       </div>
                   </div>
                </div>
              ))}
-             {jobs.length === 0 && <p className="text-center text-slate-400 py-4">ไม่มีงานซ่อมล่าสุด</p>}
+             {jobs.length === 0 && <p className="text-center text-slate-400 py-4 text-sm">ไม่มีงานซ่อมล่าสุด</p>}
           </div>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
-           <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-red-50 to-orange-50">
+           <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-red-50 to-orange-50">
              <div className="flex items-center gap-2">
-               <div className="p-2 bg-red-100 rounded-lg">
-                 <AlertTriangle className="w-5 h-5 text-red-600" />
+               <div className="p-1.5 md:p-2 bg-red-100 rounded-lg">
+                 <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
                </div>
                <div>
-                 <h3 className="text-lg font-bold text-slate-800">แจ้งเตือนอะไหล่</h3>
-                 <p className="text-xs text-slate-500">ต้องดำเนินการ {totalAlerts} รายการ</p>
+                 <h3 className="text-base md:text-lg font-bold text-slate-800">แจ้งเตือนอะไหล่</h3>
+                 <p className="text-[10px] md:text-xs text-slate-500">ต้องดำเนินการ {totalAlerts} รายการ</p>
                </div>
              </div>
              <button 
                onClick={() => onNavigate('parts-inventory')}
-               className="flex items-center gap-1 text-xs bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-sm"
+               className="flex items-center gap-0.5 md:gap-1 text-[11px] md:text-xs bg-blue-600 text-white px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-sm touch-manipulation active:scale-95"
              >
-               ดูทั้งหมด
-               <ChevronRight size={14} />
+               <span>ดูทั้งหมด</span>
+               <ChevronRight size={12} className="md:w-3.5 md:h-3.5" />
              </button>
            </div>
            
            {totalAlerts > 0 ? (
-             <div className="flex-1 overflow-y-auto">
+             <div className="flex-1 overflow-y-auto overscroll-contain">
                {/* สรุปสถานะ */}
-               <div className="p-4 bg-slate-50 border-b border-slate-100">
-                 <div className="grid grid-cols-2 gap-3">
-                   <div className="bg-white p-3 rounded-lg border border-red-200 shadow-sm">
-                     <div className="flex items-center gap-2 mb-1">
-                       <TrendingDown className="w-4 h-4 text-red-600" />
-                       <span className="text-xs font-semibold text-red-600">หมดสต็อก</span>
+               <div className="p-3 md:p-4 bg-slate-50 border-b border-slate-100">
+                 <div className="grid grid-cols-2 gap-2 md:gap-3">
+                   <div className="bg-white p-2 md:p-3 rounded-lg border border-red-200 shadow-sm">
+                     <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1">
+                       <TrendingDown className="w-3 h-3 md:w-4 md:h-4 text-red-600" />
+                       <span className="text-[10px] md:text-xs font-semibold text-red-600">หมดสต็อก</span>
                      </div>
-                     <div className="text-2xl font-bold text-red-700">{outOfStockParts.length}</div>
-                     <div className="text-[10px] text-slate-500 mt-1">ต้องสั่งซื้อด่วน</div>
+                     <div className="text-xl md:text-2xl font-bold text-red-700">{outOfStockParts.length}</div>
+                     <div className="text-[9px] md:text-[10px] text-slate-500 mt-0.5 md:mt-1">ต้องสั่งซื้อด่วน</div>
                    </div>
-                   <div className="bg-white p-3 rounded-lg border border-orange-200 shadow-sm">
-                     <div className="flex items-center gap-2 mb-1">
-                       <AlertCircle className="w-4 h-4 text-orange-600" />
-                       <span className="text-xs font-semibold text-orange-600">ต่ำกว่าเกณฑ์</span>
+                   <div className="bg-white p-2 md:p-3 rounded-lg border border-orange-200 shadow-sm">
+                     <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1">
+                       <AlertCircle className="w-3 h-3 md:w-4 md:h-4 text-orange-600" />
+                       <span className="text-[10px] md:text-xs font-semibold text-orange-600">ต่ำกว่าเกณฑ์</span>
                      </div>
-                     <div className="text-2xl font-bold text-orange-700">{lowStockParts.length}</div>
-                     <div className="text-[10px] text-slate-500 mt-1">เตรียมสั่งซื้อ</div>
+                     <div className="text-xl md:text-2xl font-bold text-orange-700">{lowStockParts.length}</div>
+                     <div className="text-[9px] md:text-[10px] text-slate-500 mt-0.5 md:mt-1">เตรียมสั่งซื้อ</div>
                    </div>
                  </div>
                </div>
 
                {/* รายการอะไหล่ */}
-               <div className="p-4 space-y-3">
+               <div className="p-3 md:p-4 space-y-2 md:space-y-3">
                  {criticalParts.map((part) => {
                    const isOutOfStock = part.stock === 0;
                    const stockPercentage = Math.min((part.stock / part.min) * 100, 100);

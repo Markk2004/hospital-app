@@ -88,14 +88,14 @@ export default function App() {
         setActiveTab(id); 
         if(window.innerWidth < 768) setIsSidebarOpen(false); 
       }} 
-      className={`flex items-center space-x-3 px-4 py-3 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden ${
+      className={`flex items-center space-x-3 px-3 md:px-4 py-3.5 md:py-3 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden touch-manipulation ${
         activeTab === id 
           ? 'bg-blue-50 text-blue-600 font-bold shadow-sm' 
-          : 'text-slate-600 hover:bg-slate-50'
+          : 'text-slate-600 hover:bg-slate-50 active:bg-slate-100'
       }`}
     >
-      <Icon className={`w-5 h-5 flex-shrink-0 ${activeTab === id ? 'text-blue-600' : 'text-slate-400'}`} />
-      <span className="truncate">{label}</span>
+      <Icon className={`w-5 h-5 md:w-5 md:h-5 flex-shrink-0 ${activeTab === id ? 'text-blue-600' : 'text-slate-400'}`} />
+      <span className="truncate text-base md:text-sm">{label}</span>
     </div>
   );
 
@@ -113,18 +113,18 @@ export default function App() {
   }) => (
     <div 
       onClick={onClick}
-      className={`flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden ${
+      className={`flex items-center justify-between px-3 md:px-4 py-3.5 md:py-3 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden touch-manipulation ${
         isOpen 
           ? 'bg-blue-50 text-blue-600 font-semibold' 
-          : 'text-slate-600 hover:bg-slate-50'
+          : 'text-slate-600 hover:bg-slate-50 active:bg-slate-100'
       }`}
     >
       <div className="flex items-center space-x-3">
-        <Icon className={`w-5 h-5 flex-shrink-0 ${isOpen ? 'text-blue-600' : 'text-slate-400'}`} />
-        <span className="truncate">{label}</span>
+        <Icon className={`w-5 h-5 md:w-5 md:h-5 flex-shrink-0 ${isOpen ? 'text-blue-600' : 'text-slate-400'}`} />
+        <span className="truncate text-base md:text-sm">{label}</span>
       </div>
       {isSidebarOpen && (
-        isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+        isOpen ? <ChevronDown className="w-4 h-4 md:w-4 md:h-4" /> : <ChevronRight className="w-4 h-4 md:w-4 md:h-4" />
       )}
     </div>
   );
@@ -144,14 +144,14 @@ export default function App() {
         setActiveTab(id); 
         if(window.innerWidth < 768) setIsSidebarOpen(false); 
       }}
-      className={`flex items-center space-x-3 pl-12 pr-4 py-2.5 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden ${
+      className={`flex items-center space-x-3 pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-2.5 rounded-lg cursor-pointer transition-colors whitespace-nowrap overflow-hidden touch-manipulation ${
         activeTab === id 
           ? 'bg-blue-100 text-blue-700 font-semibold' 
-          : 'text-slate-600 hover:bg-slate-50'
+          : 'text-slate-600 hover:bg-slate-50 active:bg-slate-100'
       }`}
     >
-      <Icon className={`w-4 h-4 flex-shrink-0 ${activeTab === id ? 'text-blue-600' : 'text-slate-400'}`} />
-      <span className="truncate text-sm">{label}</span>
+      <Icon className={`w-4 h-4 md:w-4 md:h-4 flex-shrink-0 ${activeTab === id ? 'text-blue-600' : 'text-slate-400'}`} />
+      <span className="truncate text-base md:text-sm">{label}</span>
     </div>
   );
 
@@ -184,13 +184,13 @@ export default function App() {
       {/* Sidebar */}
       <aside className={`${
         isSidebarOpen 
-          ? 'w-64 translate-x-0' 
+          ? 'w-72 md:w-64 translate-x-0' 
           : 'w-0 -translate-x-full md:w-20 md:translate-x-0'
-      } fixed md:relative bg-white border-r border-slate-200 transition-all duration-300 flex flex-col z-30 h-full flex-shrink-0 shadow-lg shadow-slate-100`}>
-        <div className="p-6 flex items-center justify-between h-20 shrink-0">
+      } fixed md:relative bg-white border-r border-slate-200 transition-all duration-300 flex flex-col z-30 h-full flex-shrink-0 shadow-lg shadow-slate-100 overscroll-contain`}>
+        <div className="p-4 md:p-6 flex items-center justify-between h-16 md:h-20 shrink-0">
           {isSidebarOpen ? (
-            <div className="flex items-center space-x-2 text-blue-600 font-bold text-xl truncate animate-in fade-in">
-              <Activity className="w-8 h-8 flex-shrink-0" />
+            <div className="flex items-center space-x-2 text-blue-600 font-bold text-lg md:text-xl truncate animate-in fade-in">
+              <Activity className="w-7 h-7 md:w-8 md:h-8 flex-shrink-0" />
               <span>Hospital Asset</span>
             </div>
           ) : (
@@ -198,19 +198,19 @@ export default function App() {
           )}
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-            className="hidden md:block text-slate-400 hover:text-slate-600 transition-transform hover:scale-110"
+            className="hidden md:block text-slate-400 hover:text-slate-600 transition-transform hover:scale-110 touch-manipulation"
           >
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <button 
             onClick={() => setIsSidebarOpen(false)} 
-            className="md:hidden text-slate-400"
+            className="md:hidden text-slate-400 p-2 -mr-2 touch-manipulation active:bg-slate-100 rounded-lg"
           >
-            <X size={20} />
+            <X size={22} />
           </button>
         </div>
         
-        <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
+        <nav className="flex-1 px-3 md:px-4 space-y-1.5 md:space-y-2 mt-2 md:mt-4 overflow-y-auto overscroll-contain">
           {/* หน้าหลัก - Dashboard */}
           <SidebarItem 
             icon={LayoutDashboard} 
@@ -247,7 +247,6 @@ export default function App() {
               <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
                 <DropdownChild icon={ClipboardList} label="รายการซ่อม" id="maintenance-list" />
                 <DropdownChild icon={Package} label="คลังอะไหล่" id="parts-inventory" />
-                <DropdownChild icon={ShoppingCart} label="สั่งซื้ออะไหล่" id="parts-order" />
               </div>
             )}
           </div>
@@ -299,15 +298,15 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden relative w-full">
         {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-10 px-4 md:px-8 h-16 flex items-center justify-between shrink-0">
-           <div className="flex items-center gap-3">
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-10 px-3 md:px-8 h-14 md:h-16 flex items-center justify-between shrink-0">
+           <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
              <button 
                onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-               className="md:hidden text-slate-500 hover:text-slate-700"
+               className="md:hidden text-slate-500 hover:text-slate-700 p-2 -ml-2 touch-manipulation active:bg-slate-100 rounded-lg flex-shrink-0"
              >
-               <Menu size={24} />
+               <Menu size={22} />
              </button>
-             <h1 className="text-lg md:text-xl font-bold text-slate-800 truncate">
+             <h1 className="text-base md:text-xl font-bold text-slate-800 truncate">
                {activeTab === 'dashboard' && 'หน้าหลัก'}
                {activeTab === 'asset-register' && 'ลงทะเบียนครุภัณฑ์'}
                {activeTab === 'asset-borrow' && 'ระบบยืม-คืนครุภัณฑ์'}
@@ -321,7 +320,7 @@ export default function App() {
                {activeTab === 'users' && 'ผู้ใช้งาน'}
              </h1>
            </div>
-           <div className="flex items-center gap-4">
+           <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
              <div className="relative hidden md:block">
                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                <input 
@@ -332,10 +331,10 @@ export default function App() {
              </div>
              <button 
                onClick={() => setActiveTab('parts-inventory')}
-               className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+               className="relative p-2.5 md:p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors touch-manipulation active:bg-slate-200"
                title={`การแจ้งเตือนอะไหล่: ${totalAlerts} รายการ`}
              >
-               <Bell size={20} />
+               <Bell size={20} className="md:w-5 md:h-5" />
                {totalAlerts > 0 && (
                  <>
                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
@@ -378,7 +377,6 @@ export default function App() {
           {(activeTab === 'asset-register' || 
             activeTab === 'asset-borrow' || 
             activeTab === 'asset-depreciation' || 
-            activeTab === 'parts-order' ||
             activeTab === 'report-summary' ||
             activeTab === 'report-maintenance' ||
             activeTab === 'report-parts' ||
@@ -388,7 +386,6 @@ export default function App() {
                 {activeTab === 'asset-register' && <FileText className="w-10 h-10 text-blue-600" />}
                 {activeTab === 'asset-borrow' && <ArrowRightLeft className="w-10 h-10 text-blue-600" />}
                 {activeTab === 'asset-depreciation' && <TrendingDown className="w-10 h-10 text-blue-600" />}
-                {activeTab === 'parts-order' && <ShoppingCart className="w-10 h-10 text-blue-600" />}
                 {activeTab === 'report-summary' && <PieChart className="w-10 h-10 text-blue-600" />}
                 {activeTab === 'report-maintenance' && <FileBarChart className="w-10 h-10 text-blue-600" />}
                 {activeTab === 'report-parts' && <Package className="w-10 h-10 text-blue-600" />}
@@ -398,7 +395,6 @@ export default function App() {
                 {activeTab === 'asset-register' && 'ลงทะเบียนครุภัณฑ์'}
                 {activeTab === 'asset-borrow' && 'ระบบยืม-คืนครุภัณฑ์'}
                 {activeTab === 'asset-depreciation' && 'ค่าเสื่อมราคา'}
-                {activeTab === 'parts-order' && 'สั่งซื้ออะไหล่'}
                 {activeTab === 'report-summary' && 'สรุปภาพรวม'}
                 {activeTab === 'report-maintenance' && 'รายงานการซ่อม'}
                 {activeTab === 'report-parts' && 'รายงานอะไหล่'}

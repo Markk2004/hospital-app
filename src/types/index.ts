@@ -46,3 +46,21 @@ export interface FormData {
   urgency: 'normal' | 'medium' | 'high';
   reporter: string;
 }
+
+export type PurchaseOrderStatus = 'pending' | 'ordered' | 'received' | 'cancelled';
+
+export interface PurchaseOrder {
+  id: string;
+  partId: string;
+  partName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  status: PurchaseOrderStatus;
+  requestedBy: string;
+  requestedDate: string;
+  orderedDate?: string;
+  receivedDate?: string;
+  supplier?: string;
+  note?: string;
+}
