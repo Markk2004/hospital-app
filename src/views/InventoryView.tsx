@@ -2,15 +2,16 @@ import { useState, useMemo } from 'react';
 import { 
   Package, AlertTriangle, Search, TrendingUp, TrendingDown, 
   Plus, Edit2, Trash2, Download, Upload, Grid3x3, List,
-  Filter, ArrowUpDown, ArrowUp, ArrowDown, X, Save,
-  BarChart3, ShoppingCart, FileText, Eye, ChevronLeft, ChevronRight,
-  CheckCircle2, Clock, XCircle, Truck, Calendar, User, DollarSign
+  ArrowUp, ArrowDown, X,
+  BarChart3, ShoppingCart, FileText, ChevronLeft, ChevronRight,
+  CheckCircle2, Clock, XCircle, Truck, Calendar, User
 } from 'lucide-react';
 import type { Part, InventoryAlert, PurchaseOrder } from '../types';
 import { StockStatusBadge } from '../components/StockStatusBadge';
 
 interface InventoryViewProps {
   inventory: Part[];
+  onUpdateInventory?: (inventory: Part[]) => void;
 }
 
 type ViewMode = 'table' | 'grid';
@@ -26,7 +27,7 @@ interface PartFormData {
   unit: string;
 }
 
-export function InventoryView({ inventory: initialInventory }: InventoryViewProps) {
+export function InventoryView({ inventory: initialInventory, onUpdateInventory }: InventoryViewProps) {
   const [inventory, setInventory] = useState<Part[]>(initialInventory);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'critical' | 'warning' | 'ok'>('all');
@@ -69,7 +70,9 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
       min: Number(formData.min)
     };
     
-    setInventory([...inventory, newPart]);
+    const updatedInventory = [...inventory, newPart];
+    setInventory(updatedInventory);
+    onUpdateInventory?.(updatedInventory);
     setShowAddModal(false);
     resetForm();
   };
@@ -77,9 +80,11 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
   const handleEditPart = () => {
     if (!selectedPart) return;
     
-    setInventory(inventory.map(part => 
+    const updatedInventory = inventory.map(part => 
       part.id === selectedPart.id ? { ...formData } : part
-    ));
+    );
+    setInventory(updatedInventory);
+    onUpdateInventory?.(updatedInventory);
     setShowEditModal(false);
     setSelectedPart(null);
     resetForm();
@@ -87,18 +92,22 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
 
   const handleDeletePart = (partId: string) => {
     if (confirm('คุณต้องการลบอะไหล่นี้หรือไม่?')) {
-      setInventory(inventory.filter(part => part.id !== partId));
+      const updatedInventory = inventory.filter(part => part.id !== partId);
+      setInventory(updatedInventory);
+      onUpdateInventory?.(updatedInventory);
     }
   };
 
   const handleStockAdjustment = () => {
     if (!selectedPart || stockAdjustment === 0) return;
     
-    setInventory(inventory.map(part => 
+    const updatedInventory = inventory.map(part => 
       part.id === selectedPart.id 
         ? { ...part, stock: Math.max(0, part.stock + stockAdjustment) }
         : part
-    ));
+    );
+    setInventory(updatedInventory);
+    onUpdateInventory?.(updatedInventory);
     setShowStockModal(false);
     setSelectedPart(null);
     setStockAdjustment(0);
@@ -163,11 +172,15 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
     
     // เพิ่มสต็อกเมื่อได้รับของ (แยกออกมาเพื่อให้ state sync ดีขึ้น)
     if (newStatus === 'received' && orderToUpdate) {
-      setInventory(prevInventory => prevInventory.map(part =>
-        part.id === orderToUpdate.partId
-          ? { ...part, stock: part.stock + orderToUpdate.quantity }
-          : part
-      ));
+      setInventory(prevInventory => {
+        const updatedInventory = prevInventory.map(part =>
+          part.id === orderToUpdate.partId
+            ? { ...part, stock: part.stock + orderToUpdate.quantity }
+            : part
+        );
+        onUpdateInventory?.(updatedInventory);
+        return updatedInventory;
+      });
     }
   };
 
@@ -655,7 +668,7 @@ export function InventoryView({ inventory: initialInventory }: InventoryViewProp
                       </td>
                     </tr>
                   ) : (
-                    currentItems.map((part, idx) => (
+                    currentItems.map((part) => (
                       <tr 
                         key={part.id} 
                         className="hover:bg-blue-50 transition-colors group"

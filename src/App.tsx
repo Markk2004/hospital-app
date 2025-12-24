@@ -15,7 +15,6 @@ import {
   ChevronRight,
   FileText,
   TrendingDown,
-  ShoppingCart,
   ClipboardList,
   Users,
   FileBarChart,
@@ -32,6 +31,7 @@ import { initialJobs, initialPartsInventoryData } from './data/mockData';
 import { Toast } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { MobileLoginPage } from './components/MobileLoginPage';
+import { NewsSlider } from './components/NewsSlider';
 
 // Import Views
 import { DashboardView } from './views/DashboardView';
@@ -40,6 +40,7 @@ import { InventoryView } from './views/InventoryView';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasSeenSlider, setHasSeenSlider] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -79,6 +80,10 @@ export default function App() {
     setPartsInventory(prev => prev.map(part => 
         part.id === partId ? { ...part, stock: Math.max(0, part.stock - 1) } : part
     ));
+  };
+
+  const handleUpdateInventory = (updatedInventory: Part[]) => {
+    setPartsInventory(updatedInventory);
   };
 
   // Sidebar Menu Items
@@ -172,6 +177,10 @@ export default function App() {
     return isMobile 
       ? <MobileLoginPage onLogin={() => setIsLoggedIn(true)} /> 
       : <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+  }
+
+  if (!hasSeenSlider) {
+    return <NewsSlider onEnterSite={() => setHasSeenSlider(true)} />;
   }
 
   return (
@@ -370,7 +379,10 @@ export default function App() {
           )}
           
           {activeTab === 'parts-inventory' && (
-            <InventoryView inventory={partsInventory} />
+            <InventoryView 
+              inventory={partsInventory} 
+              onUpdateInventory={handleUpdateInventory}
+            />
           )}
           
           {/* Placeholder pages */}
