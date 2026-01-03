@@ -234,14 +234,10 @@ export const AssetBorrowView: React.FC = () => {
               >
                 {/* Image */}
                 <div className="relative aspect-square bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
-                  <img
-                    src={asset.image}
-                    alt={asset.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23e2e8f0" width="200" height="200"/%3E%3Ctext fill="%2394a3b8" font-family="sans-serif" font-size="14" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
-                    }}
-                  />
+                  {/* รูปภาพถูกลบออก ให้แสดงว่างเปล่า */}
+                  <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
+                    {/* Empty */}
+                  </div>
                   {/* Asset ID Badge */}
                   <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg">
                     <span className="text-xs font-bold text-slate-700">{asset.id}</span>
